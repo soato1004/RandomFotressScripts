@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d023bfd61fdc453e9894f7961d3a6285
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - DamageTextPrefab: {fileID: 6341991146816717156, guid: 7b2228bc12b074a54881640867a0d0f0, type: 3}
+  - HpBarPrefab: {fileID: 505201717946751069, guid: f7723aea49b474c1483e5282abdadfe3, type: 3}
+  - TowerPrefab: {fileID: 8718977379969226656, guid: 4c0aacbe4c2aa4293ad9971ed8e6fcba, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
