@@ -3,7 +3,7 @@ using System.Collections;
 using UniRx;
 using UnityEngine;
 
-namespace RandomFortress.Common.Util
+namespace RandomFortress.Common.Utils
 {
     /// <summary> </summary>
     public static class JTUtil
@@ -63,6 +63,8 @@ namespace RandomFortress.Common.Util
 
     public static class JTDebug
     {
+        static bool isDetail = false;
+        
         public static void LogColor(object message, string color = "red")
         {
 #if UNITY_EDITOR
@@ -74,7 +76,8 @@ namespace RandomFortress.Common.Util
 
         public static void Log(object message)
         {
-            Debug.Log(message);
+            if (isDetail)
+                Debug.Log(message);
         }
 
         public static void LogError(object message)

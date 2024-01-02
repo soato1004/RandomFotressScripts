@@ -11,7 +11,7 @@ namespace RandomFortress.Common
             pa = GetComponent<ParticleSystem>();
             if (pa != null)
             {
-                Destroy(this, pa.main.duration);
+                Destroy(gameObject, pa.main.duration);
             }
             else
                 Debug.Log("Not Found ParticleSystem");

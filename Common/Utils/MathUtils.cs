@@ -1,4 +1,4 @@
-namespace RandomFortress.Common.Util
+namespace RandomFortress.Common.Utils
 {
     public static class MathUtil
     {
