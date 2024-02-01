@@ -1,11 +1,11 @@
-﻿using System.Collections;
-using Photon.Pun;
+﻿using Photon.Pun;
 using Photon.Realtime;
 using RandomFortress.Common;
-using RandomFortress.Common.Utils;
+using RandomFortress.Common.Util;
 using RandomFortress.Manager;
 using RandomFortress.Scene;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace RandomFortress.Game.Netcode
 {
@@ -137,7 +137,7 @@ namespace RandomFortress.Game.Netcode
         public override void OnLeftRoom()
         {
             if (MainManager.Instance != null)
-                MainManager.Instance.ChangeScene(SceneName.Lobby);
+                MainManager.Instance.ChangeScene(SceneName.Menu);
         }
 
         #endregion
@@ -153,37 +153,11 @@ namespace RandomFortress.Game.Netcode
             }
             Debug.LogFormat("PUN Current Room Players : {0}", PhotonNetwork.CurrentRoom.PlayerCount);
 
-            // if (!isStart)
-            // {
-            //     isStart = true;
-            //     StartCoroutine(WaitPlayerAndStartGameCor());                
-            // }
-
             // if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
-            // {
-            //     PhotonNetwork.LoadLevel(SceneName.Game.ToString());
-            //     // MainManager.Instance.ChangeScene(SceneName.Game);   
-            // }
-            
-            PhotonNetwork.LoadLevel(SceneName.Game.ToString());
-        }
-
-        private bool isStart = false;
-        
-        public const float delayTime = 3f;
-        
-        public float waitTime = 0f;
-        
-        
-        IEnumerator WaitPlayerAndStartGameCor()
-        {
-            while (waitTime < delayTime)
             {
-                waitTime += Time.deltaTime;
-                yield return null;
+                PhotonNetwork.LoadLevel(SceneName.Game.ToString());
+                // MainManager.Instance.ChangeScene(SceneName.Game);   
             }
-            
-            PhotonNetwork.LoadLevel(SceneName.Game.ToString());
         }
 
         #endregion
@@ -216,8 +190,6 @@ namespace RandomFortress.Game.Netcode
         public void LeaveRoom()
         {
             isConnecting = false;
-            isStart = false;
-            waitTime = 0;
             PhotonNetwork.LeaveRoom();
         }
 

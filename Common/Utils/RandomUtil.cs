@@ -1,4 +1,4 @@
-﻿namespace RandomFortress.Common.Utils
+﻿namespace RandomFortress.Common
 {
     public static class RandomUtil
     {
