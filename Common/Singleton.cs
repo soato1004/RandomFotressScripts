@@ -1,7 +1,5 @@
 using System;
 using Photon.Pun;
-using RandomFortress.Common.Util;
-using RandomFortress.Util;
 using UnityEngine;
 
 namespace RandomFortress.Common
@@ -9,152 +7,174 @@ namespace RandomFortress.Common
     public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static T _instance;
-        // private static Transform _parent;
-        
+        private static object _lock = new object();
+        private static bool applicationIsQuitting = false;
+
+        [SerializeField] private static bool dontDestroyObject = true;
+
         public static T Instance
         {
             get
             {
-                if (_instance != null) return _instance;
-                return null;
-                // throw new Exception($"MonoSingleton {typeof(T)} Initialize");
-            }
-        }
-        
-        public static void Initialize()
-        {
-            // // 
-            // if (_parent == null)
-            // {
-            //     var go = GameObject.Find("Managers");
-            //     if (go == null)
-            //         go = new GameObject("Managers");
-            //
-            //     _parent = go.transform;
-            // }
-            
-            // 모노싱글톤 찾기.
-            _instance = UnityEngine.Object.FindObjectOfType(typeof(T)) as T;
-
-            // 찾아도 없다면 인스턴스 생성.
-            if (null == _instance) {
-                GameObject goSingleton = new GameObject(typeof(T).Name, typeof(T));
-                _instance = goSingleton.GetComponent<T>();
-                UnityEngine.Object.DontDestroyOnLoad(goSingleton);
-                JTDebug.LogColor($"MonoSingleton {typeof(T)} :: Create {goSingleton}", $"{LogColor.Singleton}");
-            } else {
-                UnityEngine.Object.DontDestroyOnLoad(_instance.gameObject);
-                JTDebug.LogColor($"MonoSingleton :: Has MonoSingleton Please Use {_instance.gameObject.name} / {typeof(T)}", $"{LogColor.Singleton}");
-            }
-
-            // _instance.transform.parent = _parent;
-        }
-
-        /// <summary>
-        /// 매니저 클래스 초기화
-        /// </summary>
-        public abstract void Reset();
-
-        /// <summary>
-        /// 매니저 클래스 마무리
-        /// </summary>
-        public abstract void Terminate();
-    }
-    
-    public abstract class SingletonNetwork<T> : MonoBehaviour where T : Component
-    {
-        private static T _instance;
-        // private static Transform _parent;
-        
-        public virtual void Awake()
-        {
-            Initialize();
-        }
-        
-        public static T Instance
-        {
-            get
-            {
-                if (_instance != null) 
-                    return _instance;
-                else
+                if (applicationIsQuitting)
                 {
-                    Initialize();
-                    
-                    if (_instance != null) 
-                        return _instance;
-                    
-                    throw new Exception($"MonoSingleton {typeof(T)} Initialize");
+                    Debug.LogWarning($"[Singleton] Instance '{typeof(T)}' already destroyed. Returning null.");
+                    return null;
+                }
+
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        Initialize();
+
+                        if (_instance == null)
+                            throw new Exception($"MonoSingleton {typeof(T)} failed to Initialize.");
+                    }
+
+                    return _instance;
                 }
             }
         }
-        
+
         public static void Initialize()
         {
-            // 모노싱글톤 찾기.
-            _instance = UnityEngine.Object.FindObjectOfType(typeof(T)) as T;
-        
-            // 찾아도 없다면 인스턴스 생성.
-            if (null == _instance) {
+            if (_instance != null)
+            {
+                Debug.LogWarning($"MonoSingleton {typeof(T)} :: Instance already exists. Using existing instance.");
+                return;
+            }
+
+            _instance = FindObjectOfType<T>();
+
+            if (_instance == null)
+            {
                 GameObject goSingleton = new GameObject(typeof(T).Name, typeof(T));
                 _instance = goSingleton.GetComponent<T>();
-                UnityEngine.Object.DontDestroyOnLoad(goSingleton);
-                JTDebug.LogColor($"MonoSingleton {typeof(T)} :: Create {goSingleton}", $"{LogColor.Singleton}");
-            } else {
-                UnityEngine.Object.DontDestroyOnLoad(_instance.gameObject);
-                JTDebug.LogColor($"MonoSingleton :: Has MonoSingleton Please Use {_instance.gameObject.name} / {typeof(T)}", $"{LogColor.Singleton}");
+                Debug.Log($"MonoSingleton {typeof(T)} :: Created {goSingleton.name}");
+            }
+            else
+            {
+                Debug.Log($"MonoSingleton :: Found existing instance of {typeof(T)} using {_instance.gameObject.name}");
+            }
+
+            if (dontDestroyObject && _instance.transform.parent == null)
+            {
+                DontDestroyOnLoad(_instance.gameObject);
+            }
+            
+            
+        }
+
+        protected virtual void Awake()
+        {
+            if (_instance == null)
+            {
+                _instance = this as T;
+                if (dontDestroyObject)
+                    DontDestroyOnLoad(this.gameObject);
+            }
+            else if (_instance != this)
+            {
+                Destroy(gameObject);
             }
         }
-        
-        /// <summary>
-        /// 매니저 클래스 초기화
-        /// </summary>
+
+        protected virtual void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                applicationIsQuitting = true;
+            }
+        }
+
         public abstract void Reset();
-        
-        /// <summary>
-        /// 매니저 클래스 마무리
-        /// </summary>
         public abstract void Terminate();
     }
     
-    public abstract class SingletonPun<T> : MonoBehaviourPunCallbacks where T : MonoBehaviour
+        public abstract class SingletonPun<T> : MonoBehaviourPunCallbacks where T : MonoBehaviour
     {
         private static T _instance;
-        
+        private static object _lock = new object();
+        private static bool applicationIsQuitting = false;
+
+        [SerializeField] private static bool dontDestroyObject = true;
+
         public static T Instance
         {
             get
             {
-                if (_instance != null) return _instance;
-                throw new Exception($"MonoSingleton {typeof(T)} Initialize");
+                if (applicationIsQuitting)
+                {
+                    Debug.LogWarning($"[Singleton] Instance '{typeof(T)}' already destroyed. Returning null.");
+                    return null;
+                }
+
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        Initialize();
+
+                        if (_instance == null)
+                            throw new Exception($"MonoSingleton {typeof(T)} failed to Initialize.");
+                    }
+
+                    return _instance;
+                }
             }
         }
-        
+
         public static void Initialize()
         {
-            // 모노싱글톤 찾기.
-            _instance = UnityEngine.Object.FindObjectOfType(typeof(T)) as T;
+            if (_instance != null)
+            {
+                Debug.LogWarning($"MonoSingleton {typeof(T)} :: Instance already exists. Using existing instance.");
+                return;
+            }
 
-            // 찾아도 없다면 인스턴스 생성.
-            if (null == _instance) {
+            _instance = FindObjectOfType<T>();
+
+            if (_instance == null)
+            {
                 GameObject goSingleton = new GameObject(typeof(T).Name, typeof(T));
                 _instance = goSingleton.GetComponent<T>();
-                UnityEngine.Object.DontDestroyOnLoad(goSingleton);
-                JTDebug.LogColor($"MonoSingleton {typeof(T)} :: Create {goSingleton}", $"{LogColor.Singleton}");
-            } else {
-                UnityEngine.Object.DontDestroyOnLoad(_instance.gameObject);
-                JTDebug.LogColor($"MonoSingleton :: Has MonoSingleton Please Use {_instance.gameObject.name} / {typeof(T)}", $"{LogColor.Singleton}");
+                Debug.Log($"MonoSingleton {typeof(T)} :: Created {goSingleton.name}");
+            }
+            else
+            {
+                Debug.Log($"MonoSingleton :: Found existing instance of {typeof(T)} using {_instance.gameObject.name}");
+            }
+
+            if (dontDestroyObject && _instance.transform.parent == null)
+            {
+                DontDestroyOnLoad(_instance.gameObject);
             }
         }
 
-        /// <summary>
-        /// 매니저 클래스 초기화
-        /// </summary>
-        public abstract void Reset();
+        protected virtual void Awake()
+        {
+            if (_instance == null)
+            {
+                _instance = this as T;
+                if (dontDestroyObject)
+                    DontDestroyOnLoad(this.gameObject);
+            }
+            else if (_instance != this)
+            {
+                Destroy(gameObject);
+            }
+        }
 
-        /// <summary>
-        /// 매니저 클래스 마무리
-        /// </summary>
+        protected virtual void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                applicationIsQuitting = true;
+            }
+        }
+
+        public abstract void Reset();
         public abstract void Terminate();
     }
 }

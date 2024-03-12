@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using RandomFortress.Manager;
 using UniRx;
 using UnityEngine;
 
-namespace RandomFortress.Common.Util
+namespace RandomFortress.Common.Utils
 {
     /// <summary> </summary>
     public static class JTUtil
@@ -36,6 +38,18 @@ namespace RandomFortress.Common.Util
             return Observable.NextFrame(FrameCountType.EndOfFrame);
         }
         
+        /// <summary> 타임스케일값에 영향을 받는 대기 </summary>
+        public static IEnumerator WaitForSeconds(float seconds)
+        {
+            float timer = 0;
+            while (timer < seconds)
+            {
+                timer += Time.deltaTime * GameManager.Instance.timeScale;
+                yield return null;
+            }
+        }
+        
+        /// <summary> 딥카피 </summary>
         public static T DeepCopy<T>(T other) where T : ScriptableObject
         {
             // // 새로운 인스턴스를 만듭니다.
@@ -63,6 +77,8 @@ namespace RandomFortress.Common.Util
 
     public static class JTDebug
     {
+        static bool isDetail = false;
+        
         public static void LogColor(object message, string color = "red")
         {
 #if UNITY_EDITOR
@@ -74,7 +90,8 @@ namespace RandomFortress.Common.Util
 
         public static void Log(object message)
         {
-            Debug.Log(message);
+            if (isDetail)
+                Debug.Log(message);
         }
 
         public static void LogError(object message)

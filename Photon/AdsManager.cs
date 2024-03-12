@@ -1,5 +1,5 @@
 using RandomFortress.Common;
-using RandomFortress.Common.Util;
+using RandomFortress.Common.Utils;
 
 namespace Photon
 {
