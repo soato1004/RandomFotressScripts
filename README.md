@@ -23,7 +23,7 @@ Technology Stack
   - 타워디펜스 게임 기본 로직 구현
   - Photon Pun2을 활용한 1대1 구현
   - 게임모드별 구현 (솔로, 1대1, 8인)
-    
+
 2. 광고 적용
   - GoogleAdmob 으로 배너, 보상형광고, 전면광고를 적용
 
@@ -32,6 +32,7 @@ Technology Stack
   - GoogleSheet에 게임내 사용되는 데이터를 넣고, 에디터상에서 데이터를 Pull 하고 ScriptableObject로 만들어서 저장한다
 
 인게임 이외에는 최소기능만 부착되어있고, 나머지는 차차 구현예정
+
 
 작업 진행예정
 1. NaverGamePot으로 계정정보 관리 구현. (로그인, 계정생성, 푸쉬 등 전반적인 부분을 해당SDK로 구현예정)
