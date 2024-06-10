@@ -1,43 +1,44 @@
 using System;
 using System.Collections;
 using System.IO;
+using Firebase.Auth;
+using Firebase.Database;
 using Leguar.TotalJSON;
-using RandomFortress.Constants;
-using RandomFortress.Data;
-using RandomFortress.Manager;
-using RandomFortress.Menu;
 using UnityEngine;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     /// <summary>
-    /// 계정점보
+    /// 계정 정보
     /// </summary>
     [System.Serializable]
-    public class Account : Common.Singleton<Account>
+    public class Account : Singleton<Account>
     {
-        [SerializeField] private PlayerData data;
-        
-        // private DateTime adDebuffStartTime;
-        
+        private PlayerData data;
         public PlayerData Data => data;
-        public GameResult Result => data.BestGameResult;
-        
-        public override void Reset() { }
-        
-        public override void Terminate() { Destroy(Instance); }
+        public GameResult Result => data.bestGameResult;
+        private DatabaseReference databaseReference;
 
-        void OnApplicationQuit() {
+        public override void Reset() { }
+
+        void OnApplicationQuit()
+        {
             SaveGameData();
         }
-        
+
         public void Init()
         {
-            data = gameObject.AddComponent<PlayerData>();
-            data.Init();
-            
-            //TODO: 계정 정보. 서버에서 받는것으로 바꿔야함
-            LoadGameData();
+            data = new PlayerData();
+            databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+
+            try
+            {
+                LoadGameData();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Error loading game data: " + e.Message);
+            }
         }
 
         public void SetPlayerData(PlayerData playerData)
@@ -45,47 +46,104 @@ namespace RandomFortress.Game
             data = playerData;
         }
 
+        public void CheckUserAccount(FirebaseUser user)
+        {
+            databaseReference.Child("users").Child(user.UserId).GetValueAsync().ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError("데이터 불러오기 오류: " + task.Exception);
+                    return;
+                }
+
+                if (!task.Result.Exists)
+                {
+                    CreateNewAccount(user);
+                }
+                else
+                {
+                    LoadUserData(task.Result);
+                }
+            });
+        }
+
+        void CreateNewAccount(FirebaseUser user)
+        {
+            data = new PlayerData
+            {
+                id = user.UserId,
+                nickname = user.DisplayName,
+                isFirstPlay = true,
+                isFirstAccountCreation = true // 최초 계정 생성 여부 설정
+            };
+
+            SavePlayerData(user.UserId);
+        }
+
+        void LoadUserData(DataSnapshot snapshot)
+        {
+            data = JsonUtility.FromJson<PlayerData>(snapshot.GetRawJsonValue());
+            data.isFirstAccountCreation = false; // 계정이 이미 존재함을 설정
+            Debug.Log("계정 데이터 불러오기 성공: " + data.nickname);
+        }
+
+        public void SavePlayerData(string userId)
+        {
+            string json = JsonUtility.ToJson(data);
+            databaseReference.Child("users").Child(userId).SetRawJsonValueAsync(json).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError("계정 저장 오류: " + task.Exception);
+                }
+                else
+                {
+                    Debug.Log("계정 데이터 저장 성공");
+                }
+            });
+        }
+
+        // 광고버프 적용부분
         public void InitAdDebuff()
         {
-            // 광고버프 리스트를 역순으로 순회
             for (int i = data.adDebuffList.Count - 1; i >= 0; i--)
             {
                 var adDebuff = data.adDebuffList[i];
                 DateTime endTime = DateTime.Parse(adDebuff.endTime);
                 float waitTime = (float)endTime.Subtract(DateTime.Now).TotalSeconds;
 
-                // 버프 시간이 지났다면 삭제
                 if (waitTime <= 0)
                 {
                     data.adDebuffList.RemoveAt(i);
                 }
                 else
                 {
-                    // TODO: 추후 서버에서 받는 걸로 바꿔야 한다
                     MainManager.Instance.SetAdDebuff(adDebuff.type, waitTime);
                     StartCoroutine(AdDebuffCoroutine(adDebuff.type, waitTime));
                 }
             }
         }
-        
+
         public void AddAdDebuff(AdDebuffType type)
         {
+            Debug.Log("AddAdDebuff 접근");
             AdDebuffState adDebuff = new AdDebuffState
             {
                 type = type,
                 endTime = DateTime.Now.AddMinutes(GameConstants.AdDebuffMinute).ToString()
             };
             data.adDebuffList.Add(adDebuff);
-            
+
             DateTime endTime = DateTime.Parse(adDebuff.endTime);
             float waitTime = (float)endTime.Subtract(DateTime.Now).TotalSeconds;
-            
+
             MainManager.Instance.SetAdDebuff(adDebuff.type, waitTime);
             StartCoroutine(AdDebuffCoroutine(adDebuff.type, waitTime));
         }
-        
+
         private IEnumerator AdDebuffCoroutine(AdDebuffType type, float waitTime)
         {
+            Debug.Log("AdDebuffCoroutine 접근");
             float timer = 0;
 
             while (timer < waitTime)
@@ -94,11 +152,11 @@ namespace RandomFortress.Game
                 timer += 1;
             }
 
-            foreach (var adDebuff in data.adDebuffList)
+            for (int i = 0; i < data.adDebuffList.Count; i++)
             {
-                if (adDebuff.type == type)
+                if (data.adDebuffList[i].type == type)
                 {
-                    data.adDebuffList.Remove(adDebuff);
+                    data.adDebuffList.RemoveAt(i);
                     break;
                 }
             }
@@ -108,26 +166,13 @@ namespace RandomFortress.Game
 
         #region Inventory
 
-        
         public int[] GetTowerDeck => data.towerDeck;
-        
+
         public int TowerDeck(int index) => data.towerDeck[index];
         public int SkillDeck(int index) => data.skillDeck[index];
-        
-        public int GetCardLevel(int towerIndex)
-        {
-            if (data.towerCardDic.ContainsKey(towerIndex.ToString()))
-            {
-                return data.towerCardDic[towerIndex.ToString()].CardLV;
-            }
 
-            Debug.Log("Not Found TowerCard!!");
-            return 0;
-        }
-        
         public int TowerDeckAddOrRemove(int towerIndex)
         {
-            // 중복 되는 타워가 있다면 빼준다
             int size = data.towerDeck.Length;
             for (int i = 0; i < size; ++i)
             {
@@ -137,8 +182,7 @@ namespace RandomFortress.Game
                     return 0;
                 }
             }
-            
-            // 빈슬롯이 있다면 추가한다
+
             for (int i = 0; i < size; ++i)
             {
                 if (data.towerDeck[i] == 0)
@@ -147,14 +191,12 @@ namespace RandomFortress.Game
                     return towerIndex;
                 }
             }
-            
-            // 슬롯에 자리가없다면 아무런 행동도 하지않는다
+
             return 0;
         }
-        
+
         public int SkillDeckAddOrRemove(int skillIndex)
         {
-            // 중복 되는 타워가 있다면 빼준다
             int size = data.skillDeck.Length;
             for (int i = 0; i < size; ++i)
             {
@@ -164,8 +206,7 @@ namespace RandomFortress.Game
                     return 0;
                 }
             }
-            
-            // 빈슬롯이 있다면 추가한다
+
             for (int i = 0; i < size; ++i)
             {
                 if (data.skillDeck[i] == 0)
@@ -174,8 +215,7 @@ namespace RandomFortress.Game
                     return skillIndex;
                 }
             }
-            
-            // 슬롯에 자리가없다면 아무런 행동도 하지않는다
+
             return 0;
         }
 
@@ -183,42 +223,35 @@ namespace RandomFortress.Game
 
         #region SaveLoad
 
-        // 게임 결과값 저장
         public void SaveStageResult(GameResult result)
         {
-            if (data.BestGameResult == null)
+            if (data.bestGameResult == null)
             {
-                data.BestGameResult = result;
+                data.bestGameResult = result;
             }
             else
             {
-                if (data.BestGameResult.rank <= result.rank)
+                if (data.bestGameResult.rank <= result.rank)
                 {
-                    data.BestGameResult = result;
+                    data.bestGameResult = result;
                 }
             }
-            
+
             data.gameResultList.Add(result);
-            
-            // 최대 10개까지 히스토리 저장
+
             if (data.gameResultList.Count > 10)
                 data.gameResultList.Remove(data.gameResultList[0]);
         }
-        
+
         private void SaveGameData()
         {
-            JSON json = JSON.Serialize(data);
-            string jsonString = json.CreateString();
+            string json = JsonUtility.ToJson(data);
             string filePath = Path.Combine(Application.persistentDataPath, "gameData.json");
-            File.WriteAllText(filePath, jsonString);
-            
-            Debug.Log("Success Save GameData!! ");
-            
-            // string dataAsJson = JsonUtility.ToJson(data);
-            // string filePath = Path.Combine(Application.persistentDataPath, "gameData.json");
-            // File.WriteAllText(filePath, dataAsJson);
+            File.WriteAllText(filePath, json);
+
+            Debug.Log("Success Save GameData!!");
         }
-        
+
         private bool LoadGameData()
         {
             string filePath = Path.Combine(Application.persistentDataPath, "gameData.json");
@@ -227,58 +260,16 @@ namespace RandomFortress.Game
                 string dataAsJson = File.ReadAllText(filePath);
                 if (dataAsJson.Length > 0)
                 {
-                    JSON json = JSON.ParseString(dataAsJson);
-                    PlayerData temp = json.Deserialize<PlayerData>();
-                    data.id = temp.id;
-                    data.nickname = temp.nickname;
-                    data.gold = temp.gold;
-                    data.gem = temp.gem;
-                    data.winCount = temp.winCount;
-                    data.loseCount = temp.loseCount;
-                    data.eloRating = temp.eloRating;
-                    data.trophy = temp.trophy;
-                    data.soloRank = temp.soloRank;
-                    data.BestGameResult = temp.BestGameResult;
-                    data.gameResultList = temp.gameResultList;
-                    data.isFirstPlay = temp.isFirstPlay;
-                    data.isTutorialLobby = temp.isTutorialLobby;
-                    data.isTutorialGame = temp.isTutorialGame;
-                    data.towerDeck = temp.towerDeck;
-                    data.skillDeck = temp.skillDeck;
-                    data.towerCardDic = temp.towerCardDic;
-                    data.myItem = temp.myItem;
-                    data.androidAppid = temp.androidAppid;
-                    data.iOSAppid = temp.iOSAppid;
-                    data.googleAppid = temp.googleAppid;
-                    data.facebookAppid = temp.facebookAppid;
-                    data.adDebuffList = temp.adDebuffList;
-                    
+                    PlayerData temp = JsonUtility.FromJson<PlayerData>(dataAsJson);
+                    data = temp;
+
                     Debug.Log("Success Load GameData!! " + data);
                     return true;
                 }
             }
-            
-            Debug.Log("Fail Load GameData!!");
-            
-            return false;
-            
-            // string filePath = Path.Combine(Application.persistentDataPath, "gameData.json");
-            // if (File.Exists(filePath))
-            // {
-            //     string dataAsJson = File.ReadAllText(filePath);
-            //     if (dataAsJson.Length > 0)
-            //     {
-            //         JsonUtility.FromJsonOverwrite(dataAsJson, data);
-            //         return true;
-            //     }
-            // }
-            //
-            // return false;
-        }
 
-        private void SetPlayerData()
-        {
-            
+            Debug.Log("Fail Load GameData!!");
+            return false;
         }
 
         #endregion

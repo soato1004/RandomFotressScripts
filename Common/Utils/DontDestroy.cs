@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace RandomFortress.Common.Utils
+namespace RandomFortress
 {
     public class DontDestroy : MonoBehaviour
     {

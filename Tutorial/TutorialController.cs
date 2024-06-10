@@ -1,9 +1,6 @@
 using System.Collections;
 using DG.Tweening;
 using GoogleAds;
-using RandomFortress.Common.Utils;
-using RandomFortress.Game;
-using RandomFortress.Manager;
 using RandomFortress.Menu;
 using TMPro;
 using UnityEngine;
@@ -11,7 +8,7 @@ using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
 
-namespace DefaultNamespace
+namespace RandomFortress
 {
     public class TutorialController : MonoBehaviour
     {
@@ -86,7 +83,7 @@ namespace DefaultNamespace
                 return;
 
             canTouch = false;
-            DelayCallUtils.DelayCall(1f, () => canTouch = true);
+            DelayCallUtils.DelayCallCoroutine(this,1f, () => canTouch = true);
             
             ++currentPage;
             SetTutorialText();
@@ -97,9 +94,9 @@ namespace DefaultNamespace
             if (currentPage == 3)
             {
                 float banner_height = 0;
-                if (GoogleAdMobController.Instance != null && GoogleAdMobController.Instance.Banner != null)
+                if (GoogleAdMobController.Instance != null && GoogleAdMobController.Instance._bannerView != null)
                 {
-                    banner_height = GoogleAdMobController.Instance.Banner.GetHeightInPixels();
+                    banner_height = GoogleAdMobController.Instance._bannerView.GetHeightInPixels();
                 }
                 
                 canTouch = false;
@@ -144,7 +141,7 @@ namespace DefaultNamespace
             ++currentPage;
             SetTutorialText();
             
-            DelayCallUtils.DelayCall(0.5f, () => canTouch = true);
+            DelayCallUtils.DelayCallCoroutine(this, 0.5f, () => canTouch = true);
             
             MainManager.Instance.ChangePlage(PageController.PageType.Inventory);
         }

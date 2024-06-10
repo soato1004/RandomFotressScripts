@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class PopupBase : MonoBehaviour
     {

@@ -1,12 +1,11 @@
-using RandomFortress.Manager;
+
 using UnityEngine;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class SoloMode : GameMode
     {
-        Vector3[] waypoints = new[]
-        {
+        Vector3[] waypoints = new[] {
             new Vector3(-380f, 870f, 0f), new Vector3(-380f, 420f, 0f), new Vector3(410f, 420f, 0f),
             new Vector3(410f, 120f, 0f), new Vector3(-380f, 120f, 0f), new Vector3(-380f, -180f, 0f),
             new Vector3(410f, -180f, 0f), new Vector3(410f, -600f, 0f)
@@ -14,9 +13,7 @@ namespace RandomFortress.Game
         
         public override void Init()
         {
-            // 화면크기에 맞춰서 배경을 조정한다
-            for(int i=0; i<waypoints.Length; ++i)
-                waypoints[i] = Vector3.Scale(waypoints[i], GameManager.Instance.mainScale);
+            boardUI.gameObject.SetActive(true);
             
             GameManager.Instance.myPlayer.gameMap = gameMap[0];
             GameManager.Instance.SetupPlayer();

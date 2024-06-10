@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="1be9c067-ee42-450a-9e56-80c28b975519" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/../Account/Account.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Account/Account.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AutoPaticleDurationDestroy.cs" beforeDir="false" afterPath="$PROJECT_DIR$/AutoPaticleDurationDestroy.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/Faths.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/Faths.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/GameConstants.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Constants/GameConstants.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/Info.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/Info.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/TileInfo.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Constants/TileInfo.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/ExtraInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/ExtraInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameData/AbilityData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameData/AbilityData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameData/BulletData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameData/BulletData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameData/MonsterData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameData/MonsterData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameData/StageData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameData/StageData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameData/TowerData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameData/TowerData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameData/TowerUpgradeData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameData/TowerUpgradeData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/GameResult.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/GameResult.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/Info/MonsterInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/Info/MonsterInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/Info/TowerInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/Info/TowerInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/PlayerData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Data/PlayerData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Extensions/ComponentExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/ComponentExtension.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Extensions/TransformExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/TransformExtension.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Singleton.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Singleton.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Touch/DragEventObject.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Touch/DragEventObject.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/Constants.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Utils/Constants.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/DontDestroy.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Utils/DontDestroy.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/ImageUtils.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/ImageUtils.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/InputUtils.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/InputUtils.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/JTUtil.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/JTUtil.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/MathUtils.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/MathUtils.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/RandomUtil.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/RandomUtil.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/SpineUtils.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utils/SpineUtils.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GoogleAds/GoogleAdMobController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../GoogleAds/GoogleAdMobController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Ability/AbilityCard.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Ability/AbilityCard.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Ability/AbilityController.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Ability/AbilityController.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Button/SkillButton.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Button/SkillButton.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Button/SpecialButton.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Button/SpecialButton.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/ETC/ParticleAutoDestroy.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/ETC/ParticleAutoDestroy.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameMode/BattleRoyalMode.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/GameMode/BattleRoyalMode.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameMode/GameMode.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/GameMode/GameMode.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameMode/OneOnOneMode.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/GameMode/OneOnOneMode.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameMode/SoloMode.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/GameMode/SoloMode.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GamePlayer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/GamePlayer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameResult/ResultPlayer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/GameResult/ResultPlayer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameResult/ResultUI.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/GameResult/ResultUI.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Manager/GameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Manager/GameManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Manager/GameUIManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Manager/GameUIManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Manager/ObjectPoolingManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Manager/ObjectPoolingManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Manager/SpawnManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Manager/SpawnManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Skill/BaseSkill.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Skill/BaseSkill.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Skill/Main/WaterSliceSkill.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Skill/Main/WaterSliceSkill.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Skill/Sub/ChangePlaceSkill.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Skill/Sub/ChangePlaceSkill.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Skill/Sub/GoodSellSKill.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../InGame/Skill/Sub/GoodSellSKill.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/BulletBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/BulletBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/DrumBallBullet.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/DrumBallBullet.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/IceBullet.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/IceBullet.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/ShotBullet.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/ShotBullet.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/ShurikenBullet.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/ShurikenBullet.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/Stiky.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/Stiky/StikyBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/Stiky/StikyBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/Stiky/ToxicStiky.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/Stiky/ToxicStiky.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/ToxicBullet.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Bullet/ToxicBullet.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff/DebuffBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff/DebuffBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff/IceDebuff.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff/IceDebuff.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff/PoisonDebuff.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Debuff/PoisonDebuff.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/EntityBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/EntityBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/FloatingText.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/FloatingText.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/HpBar.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/HpBar.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters/BossMonster.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters/BossMonster.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters/MonsterBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters/MonsterBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters/NormalMonster.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Monsters/NormalMonster.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/ObjectBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/ObjectBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/DrumbleTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/DrumbleTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/ElephantTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/ElephantTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/FlameTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/FlameTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/MachinegunTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/MachinegunTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/MaskManTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/MaskManTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/ShinoTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/ShinoTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/StingTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/StingTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/SwagTower.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/SwagTower.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/TowerBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../InGame/Unit/Towers/TowerBase.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/AdDebuff.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/AdDebuff.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/BasePage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/BasePage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Inventory/InventoryPage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Inventory/InventoryPage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Inventory/ItemSlot.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Inventory/ItemSlot.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Inventory/SkillSlot.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Inventory/SkillSlot.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Inventory/TowerSlot.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Inventory/TowerSlot.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Page/BattlePage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Page/BattlePage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Page/ButtonPage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Page/ButtonPage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Page/ClanPage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Page/ClanPage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Page/EventPage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Page/EventPage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/Page/ShopPage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/Page/ShopPage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/PageController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/PageController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Lobby/TopUIContainer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Lobby/TopUIContainer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Managers/DataManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Managers/DataManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Managers/LocalizationManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Managers/LocalizationManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Managers/MainManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Managers/MainManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Managers/PopupManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Managers/PopupManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Managers/ResourceManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Managers/ResourceManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Managers/SoundManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Managers/SoundManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Photon/AdsManager.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Photon/AdsManager.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Photon/Launcher.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Photon/Launcher.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Photon/PunManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Photon/PunManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Scene/Bootstrap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Scene/Bootstrap.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Scene/Game.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Scene/Game.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Scene/Lobby.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Scene/Lobby.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Scene/Match.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Scene/Match.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Test.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Test.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Tutorial/TutorialController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../Tutorial/TutorialController.cs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/AutoPaticleDurationDestroy.cs" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="2ew4IPjZZrxBhXe05lvxj96vpdp" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.environmentSetup",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "/Users/n/Library/Application Support/JetBrains/Rider2023.3/resharper-host/DecompilerCache",
+      "/Users/n/Library/Application Support/JetBrains/Rider2023.3/resharper-host/SourcesCache",
+      "/Users/n/.local/share/Symbols/src"
+    ]
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="애플리케이션 수준" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="디폴트 작업">
+      <changelist id="1be9c067-ee42-450a-9e56-80c28b975519" name="변경" comment="" />
+      <created>1712802226859</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1712802226859</updated>
+      <workItem from="1712802229794" duration="3000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+</project>

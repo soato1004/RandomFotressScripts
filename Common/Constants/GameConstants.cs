@@ -1,4 +1,4 @@
-namespace RandomFortress.Constants
+namespace RandomFortress
 {
     public static class GameConstants
     {
@@ -9,7 +9,8 @@ namespace RandomFortress.Constants
         
         #region Game
 
-
+        public static readonly float atkRangeMul = 1.6f; // 솔로모드에서 사정거리는 더 길어져야한다
+        
         public static readonly int MonsterCount = 10; // 몬스터의 최대 생성 수
         public static readonly int SpecialMonsterCount = 5; // 특수 몬스터의 최대 생성 수
         public static readonly int AppearDelay = 100; // 몬스터 생성 간격 1초
@@ -20,6 +21,12 @@ namespace RandomFortress.Constants
         public static readonly int MonsterDamage = 1;
         public static readonly int BossDamage = 10;
 
+        public static readonly float DebuffTickTime = 0.2f;
+
+        public static readonly float MaxTowerSelectionDuration = 2f;
+
+        public static readonly string PrefabNameHpBar = "HpBar";
+        public static readonly string TowerSeatImageName = "Seat_";
         
         #endregion
 
@@ -70,7 +77,7 @@ namespace RandomFortress.Constants
 
         #region Bullet
 
-        public static readonly int BulletMoveSpeed = 1200; // 총알 이동속도
+        public static readonly int BulletMoveSpeed = 1400; // 총알 이동속도
 
         #endregion
         
@@ -97,8 +104,11 @@ namespace RandomFortress.Constants
 
         public static readonly int MonsterTypeLimit = 10000; // 몬스터인덱스가 10000보다 크면 특수 몬스터
         
-        public static readonly string EmptyMaterial = "EmptyMaterial"; //
+        public static readonly string AllinDefaultMaterial = "AllinDefaultMaterial"; //
         public static readonly string IceDebuffMaterial = "SlowMaterial"; // 슬로우 이펙트
+        public static readonly string BurnDebuffMaterial = "BurnMaterial"; // 슬로우 이펙트
+        
+        
         public static readonly string SpeedMonsterEffPrefab = "Electricity_Square"; // 스피드형 이펙트
         public static readonly string TankMonsterEffPrefab = "Flame_circle_loop"; // 탱커형 이펙트
 
@@ -123,7 +133,7 @@ namespace RandomFortress.Constants
     }
     
     public enum MonsterState {
-        idle, walk, hit, attack, die
+        idle, walk, hit, attack, die, stun
     }
     
     public enum TowerIndex
@@ -153,19 +163,21 @@ namespace RandomFortress.Constants
     /// <summary>
     /// 디버프의 종류
     /// </summary>
-    public enum DebuffType
-    {
-        None,
-        Poison,
-        Slow,
-        Ice,
-    }
+    // public enum DebuffType
+    // {
+    //     None,
+    //     Poison,
+    //     Slow,
+    //     Ice,
+    //     Burn
+    // }
     
     public enum DebuffIndex
     {
-        Poison = 0,
-        Slow = 1,
-        Ice = 2,
+        None = -1,
+        Ice,
+        Burn,
+        Stun,
     }
     
     
@@ -183,6 +195,14 @@ namespace RandomFortress.Constants
         Bullet = 15,
         
         Boss = 16,
+        BossHP = 17,
+    }
+
+    public enum CanvasLayer
+    {
+        Dim,        // 10
+        Monster,    // 13
+        Boss,       // 17
     }
     
     public enum SceneName
@@ -200,7 +220,8 @@ namespace RandomFortress.Constants
         Damage,
         DamageCritical,
         DamageSlow,
-        DamagePoison
+        DamagePoison,
+        DamageBurn
     }
 
     public enum GameRank
@@ -255,20 +276,10 @@ namespace RandomFortress.Constants
         Boss4,
         Boss5,
     }
-
-    public enum Skill
-    {
-        // Main
-        WaterSlice = 8001,
-        
-        // Sub
-        GoodSell = 7001,
-        ChangePlace = 7002,
-    }
     
     public enum GameType
     {
-        None = -1, Solo, OneOnOne, BattleRoyal
+        Solo, OneOnOne, BattleRoyal
     }
     
     public enum TowerStateType {
@@ -279,6 +290,12 @@ namespace RandomFortress.Constants
     {
         Common, Rare, Epic, Legend, Unique
     }
-    
+
+    public enum SkillIndex
+    {
+        WaterSlice = 8001,
+        ChangePlace = 7001,
+        GoodSell = 7002,
+    }
     
 }

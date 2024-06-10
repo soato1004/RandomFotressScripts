@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Linq;
-using RandomFortress.Common.Utils;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace RandomFortress.Common.Script.Touch
+namespace RandomFortress.Script.Touch
 {
     [DisallowMultipleComponent]
     public class DragEventObject : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
@@ -129,7 +128,7 @@ namespace RandomFortress.Common.Script.Touch
 
         public Vector3 ScreenToWorldPosition(PointerEventData data)
         {
-            return InputUtils.ScreenToWorldPoint(data);
+            return Utils.ScreenToWorldPoint(data);
         }
     }
 }

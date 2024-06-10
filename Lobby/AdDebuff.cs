@@ -1,20 +1,11 @@
-using System;
 using System.Collections;
-using RandomFortress.Constants;
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace RandomFortress.Menu
 {
-    public class AdDebuffState
-    {
-        public AdDebuffType type;
-        public string endTime;    
-        
-        public AdDebuffState() {}
-    }
-    
     public class AdDebuff : MonoBehaviour
     {
         [SerializeField] private AdDebuffType type;

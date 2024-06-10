@@ -1,54 +1,34 @@
-﻿using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.SceneManagement;
-using GoogleMobileAds.Common;
-using GoogleMobileAds.Api;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using RandomFortress.Common;
-using RandomFortress.Common.Utils;
+using GoogleMobileAds.Api;
+using RandomFortress;
+using UnityEngine;
+using UnityEngine.Events;
 
 namespace GoogleAds
 {
     public class GoogleAdMobController : Singleton<GoogleAdMobController>
     {
-        private readonly TimeSpan APPOPEN_TIMEOUT = TimeSpan.FromHours(4);
-        private DateTime appOpenExpireTime;
-       
-        public AppOpenAd appOpenAd { get; private set; }
-        public BannerView bannerView { get; private set; }
-        public InterstitialAd interstitialAd { get; private set; }
-        public RewardedAd rewardedAd { get; private set; }
-        // public RewardedInterstitialAd rewardedInterstitialAd { get; private set; }
-
-        public UnityEvent onAdLoadedEvent = new UnityEvent();
-        public UnityEvent onAdFailedToLoadEvent;
-        public UnityEvent onAdOpeningEvent;
-        public UnityEvent onAdFailedToShowEvent;
-        public UnityEvent onUserEarnedRewardEvent;
-        public UnityEvent onAdClosedEvent;
-
-        
         enum AdType
         {
             Banner,                 // 배너
             Interstitial,           // 전면광고
             Rewarded,               // 보상형 광고
         }
-
-#if UNITY_EDITOR
+        
+#if UNITY_ANDROID
+        private string[] adUnitIds =
+        {
+            "ca-app-pub-7560657077531827/8417023328", // 배너
+            "ca-app-pub-7560657077531827/6155290672", // 전면광고
+            "ca-app-pub-7560657077531827/4790238114", // 보상형광고
+        };
+#else
         private string[] adUnitIds =
         {
             "ca-app-pub-7560657077531827/5683863444", // 배너
             "ca-app-pub-3940256099942544/1033173712", // 전면광고
             "ca-app-pub-3940256099942544/5224354917", // 보상형광고
-        };
-#elif UNITY_ANDROID
-        private string[] adUnitIds =
-        {
-            "ca-app-pub-3940256099942544/6300978111", // 배너
-            "ca-app-pub-7560657077531827/7272128278", // 전면광고
-            "ca-app-pub-7560657077531827/9958964424", // 보상형광고
         };
 #endif
         
@@ -64,372 +44,438 @@ namespace GoogleAds
         
         //test Android device IDs: 358074511828629
         
+        // Always use test ads.
+        internal static List<string> TestDeviceIds = new List<string>()
+        {
+            AdRequest.TestDeviceSimulator,
+#if UNITY_IPHONE
+            "",
+#elif UNITY_ANDROID
+            "358074511828629"
+#endif
+        };
         
-        // 테스트
-        // string adUnitId = "ca-app-pub-3940256099942544/6300978111";
+        // The Google Mobile Ads Unity plugin needs to be run only once.
+        private static bool? _isInitialized;
         
-        // 리얼
-        string real_adUnitId = "ca-app-pub-7560657077531827~4111703380";
+        // Helper class that implements consent using the
+        // Google User Messaging Platform (UMP) Unity plugin.
+        // [SerializeField, Tooltip("Controller for the Google User Messaging Platform (UMP) Unity plugin.")]
+        // private GoogleMobileAdsConsentController _consentController;
         
         #region UNITY MONOBEHAVIOR METHODS
         
         public override void Reset()
         {
-            JTDebug.LogColor("GoogleAdMobController Reset");
+            JustDebug.LogColor("GoogleAdMobController Reset");
         }
 
-        public override void Terminate()
+        /// <summary>
+        /// Demonstrates how to configure Google Mobile Ads Unity plugin.
+        /// </summary>
+        private void Start()
         {
-            JTDebug.LogColor("GoogleAdMobController Terminate");
-        }
-
-        public void Start()
-        {
+            // On Android, Unity is paused when displaying interstitial or rewarded video.
+            // This setting makes iOS behave consistently with Android.
             MobileAds.SetiOSAppPauseOnBackground(true);
-            MobileAds.RaiseAdEventsOnUnityMainThread = true;
 
-            List<String> deviceIds = new List<String>() { AdRequest.TestDeviceSimulator };
+            // When true all events raised by GoogleMobileAds will be raised
+            // on the Unity main thread. The default value is false.
+            // https://developers.google.com/admob/unity/quick-start#raise_ad_events_on_the_unity_main_thread
+            // MobileAds.RaiseAdEventsOnUnityMainThread = true;
 
-            // Add some test device IDs (replace with your own device IDs).
-#if UNITY_IPHONE
-             deviceIds.Add("");
-#elif UNITY_ANDROID
-             deviceIds.Add("358074511828629");
-#endif
-
-            // Configure TagForChildDirectedTreatment and test device IDs.
-            RequestConfiguration requestConfiguration =
-                new RequestConfiguration.Builder()
-                    .SetTagForChildDirectedTreatment(TagForChildDirectedTreatment.Unspecified)
-                    .SetTestDeviceIds(deviceIds).build();
-            MobileAds.SetRequestConfiguration(requestConfiguration);
-
-            // Initialize the Google Mobile Ads SDK.
-            MobileAds.Initialize(HandleInitCompleteAction);
+            // Configure your RequestConfiguration with Child Directed Treatment
+            // and the Test Device Ids.
+            MobileAds.SetRequestConfiguration(new RequestConfiguration
+            {
+                TestDeviceIds = TestDeviceIds
+            });
         }
 
         public void Init()
         {
-            RequestBannerAd();
-            RequestAndLoadInterstitialAd();
-            RequestAndLoadRewardedAd();
+            LoadInterstitialAd();
+            LoadRewardedAd();
         }
 
-        private void HandleInitCompleteAction(InitializationStatus initstatus)
-        {
-            Debug.Log("Initialization complete.");
 
-            // Callbacks from GoogleMobileAds are not guaranteed to be called on
-            // the main thread.
-            // In this example we use MobileAdsEventExecutor to schedule these calls on
-            // the next Update() loop.
-            // MobileAdsEventExecutor.ExecuteInUpdate(() => { statusText.text = "Initialization complete."; });
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            DestroyBannerAd();
-            DestroyInterstitialAd();
-            DestroyRewardedAd();
-        }
-
-        #endregion
-
-        #region HELPER METHODS
-
-        private float adLoadTime = 0f;
-        
-        private AdRequest CreateAdRequest()
-        {
-            return new AdRequest.Builder()
-                .AddKeyword("unity-admob-sample")
-                .Build();
-        }
-        
         #endregion
         
         #region BANNER ADS
         
-        public BannerView Banner => bannerView;
-        // public bool IsLoadedBanner => isLoadedBanner;
-        // private bool isLoadedBanner = false;
-        // private float reloadInterval = 3600f;
-        // private int tryLoadAdCount = 0;
+        public BannerView _bannerView;
 
-        // 배너
-        public void RequestBannerAd()
+        public void CreateBannerView()
         {
-            PrintStatus("Requesting Banner ad.");
-            
-            string adUnitId = adUnitIds[(int)AdType.Banner];
-            
-            // Clean up banner before reusing
-            if (bannerView != null)
+            Debug.Log("Creating banner view.");
+
+            // If we already have a banner, destroy the old one.
+            if(_bannerView != null)
             {
-                bannerView.Destroy();
+                DestroyBannerAd();
             }
 
-            // Create a 320x50 banner at top of the screen
-            bannerView = new BannerView(adUnitId, AdSize.SmartBanner, AdPosition.Bottom);
+            // Create a 320x50 banner at top of the screen.
+            _bannerView = new BannerView(adUnitIds[(int)AdType.Banner], AdSize.Banner, AdPosition.Bottom);
 
-            // Add Event Handlers
-            bannerView.OnBannerAdLoaded += () =>
-            {
-                // isLoadedBanner = true;
-                // tryLoadAdCount = 0;
-                // adLoadTime = Time.realtimeSinceStartup;
-                //
-                // // 1시간 간격으로 다시로드
-                // InvokeRepeating("RequestBannerAd", reloadInterval, reloadInterval);
-                bannerView.Hide();
-                
-                PrintStatus("Banner ad loaded.");
-                onAdLoadedEvent?.Invoke();
+            // Listen to events the banner may raise.
+            BannerListenToAdEvents();
 
-            };
-            bannerView.OnBannerAdLoadFailed += (LoadAdError error) =>
-            {
-                PrintStatus("Banner ad failed to load with error: " + error.GetMessage());
-                
-                // 5번 시도 후에는 다시 시도하지 않음
-                // isLoadedBanner = false;
-                // ++tryLoadAdCount;
-                // if (tryLoadAdCount < 5)
-                // {
-                //     CancelInvoke("RequestBannerAd");
-                //     Invoke("ReloadBannerAd", 5f);
-                // }
-                onAdFailedToLoadEvent?.Invoke();
-
-            };
-            bannerView.OnAdImpressionRecorded += () => { PrintStatus("Banner ad recorded an impression."); };
-            bannerView.OnAdClicked += () => { PrintStatus("Banner ad recorded a click."); };
-            bannerView.OnAdFullScreenContentOpened += () =>
-            {
-                PrintStatus("Banner ad opening.");
-                onAdOpeningEvent?.Invoke();
-
-            };
-            bannerView.OnAdFullScreenContentClosed += () =>
-            {
-                PrintStatus("Banner ad closed.");
-                onAdClosedEvent?.Invoke();
-
-            };
-            bannerView.OnAdPaid += (AdValue adValue) =>
-            {
-                string msg = string.Format("{0} (currency: {1}, value: {2}",
-                    "Banner ad received a paid event.",
-                    adValue.CurrencyCode,
-                    adValue.Value);
-                PrintStatus(msg);
-            };
-
-            // Load a banner ad
-            bannerView.LoadAd(CreateAdRequest());
+            Debug.Log("Banner view created.");
         }
 
+        /// <summary>
+        /// Creates the banner view and loads a banner ad.
+        /// </summary>
+        public void LoadBannerAd()
+        {
+            // Create an instance of a banner view first.
+            if(_bannerView == null)
+            {
+                CreateBannerView();
+            }
+
+            // Create our request used to load the ad.
+            var adRequest = new AdRequest();
+
+            // Send the request to load the ad.
+            Debug.Log("Loading banner ad.");
+            _bannerView.LoadAd(adRequest);
+        }
+
+        /// <summary>
+        /// Shows the ad.
+        /// </summary>
+        public void ShowBannerAd()
+        {
+            if (_bannerView != null)
+            {
+                Debug.Log("Showing banner view.");
+                _bannerView.Show();
+            }
+        }
+
+        /// <summary>
+        /// Hides the ad.
+        /// </summary>
+        public void HideBannerAd()
+        {
+            if (_bannerView != null)
+            {
+                Debug.Log("Hiding banner view.");
+                _bannerView.Hide();
+            }
+        }
+
+        /// <summary>
+        /// Destroys the ad.
+        /// When you are finished with a BannerView, make sure to call
+        /// the Destroy() method before dropping your reference to it.
+        /// </summary>
         public void DestroyBannerAd()
         {
-            CancelInvoke("RequestBannerAd");
-            if (bannerView != null)
+            if (_bannerView != null)
             {
-                bannerView.Destroy();
-                bannerView = null;
+                Debug.Log("Destroying banner view.");
+                _bannerView.Destroy();
+                _bannerView = null;
             }
         }
 
-        public bool ShowBannerAd()
+        /// <summary>
+        /// Listen to events the banner may raise.
+        /// </summary>
+        private void BannerListenToAdEvents()
         {
-            if (bannerView != null)
+            // Raised when an ad is loaded into the banner view.
+            _bannerView.OnBannerAdLoaded += () =>
             {
-                bannerView.Show();
-                return true;
-            }
-            return false;
+                Debug.Log("Banner view loaded an ad with response : " + _bannerView.GetResponseInfo());
+            };
+            // Raised when an ad fails to load into the banner view.
+            _bannerView.OnBannerAdLoadFailed += (LoadAdError error) =>
+            {
+                Debug.LogError("Banner view failed to load an ad with error : " + error);
+            };
+            // Raised when the ad is estimated to have earned money.
+            _bannerView.OnAdPaid += (AdValue adValue) =>
+            {
+                Debug.Log(String.Format("Banner view paid {0} {1}.",
+                    adValue.Value,
+                    adValue.CurrencyCode));
+            };
+            // Raised when an impression is recorded for an ad.
+            _bannerView.OnAdImpressionRecorded += () =>
+            {
+                Debug.Log("Banner view recorded an impression.");
+            };
+            // Raised when a click is recorded for an ad.
+            _bannerView.OnAdClicked += () =>
+            {
+                Debug.Log("Banner view was clicked.");
+            };
+            // Raised when an ad opened full screen content.
+            _bannerView.OnAdFullScreenContentOpened += () =>
+            {
+                Debug.Log("Banner view full screen content opened.");
+            };
+            // Raised when the ad closed full screen content.
+            _bannerView.OnAdFullScreenContentClosed += () =>
+            {
+                Debug.Log("Banner view full screen content closed.");
+            };
         }
         
         #endregion
 
         #region INTERSTITIAL ADS 
 
-        public void RequestAndLoadInterstitialAd()
+        private InterstitialAd _interstitialAd;
+        public InterstitialAd InterstitialAd => _interstitialAd;
+        
+        /// <summary>
+        /// Loads the ad.
+        /// </summary>
+        public void LoadInterstitialAd()
         {
-            PrintStatus("Requesting Interstitial ad.");
-            
-            string adUnitId = adUnitIds[(int)AdType.Interstitial];
-
-            // Clean up interstitial before using it
-            if (interstitialAd != null)
+            // Clean up the old ad before loading a new one.
+            if (_interstitialAd != null)
             {
-                interstitialAd.Destroy();
+                DestroyInterstitialAd();
             }
 
-            // Load an interstitial ad
-            InterstitialAd.Load(adUnitId, CreateAdRequest(),
-                (InterstitialAd ad, LoadAdError loadError) =>
+            Debug.Log("Loading interstitial ad.");
+
+            // Create our request used to load the ad.
+            var adRequest = new AdRequest();
+
+            // Send the request to load the ad.
+            InterstitialAd.Load(adUnitIds[(int)AdType.Interstitial], adRequest, (InterstitialAd ad, LoadAdError error) =>
+            {
+                // If the operation failed with a reason.
+                if (error != null)
                 {
-                    if (loadError != null)
-                    {
-                        PrintStatus("Interstitial ad failed to load with error: " +
-                                    loadError.GetMessage());
-                        return;
-                    }
-                    else if (ad == null)
-                    {
-                        PrintStatus("Interstitial ad failed to load.");
-                        return;
-                    }
+                    Debug.LogError("Interstitial ad failed to load an ad with error : " + error);
+                    return;
+                }
+                // If the operation failed for unknown reasons.
+                // This is an unexpected error, please report this bug if it happens.
+                if (ad == null)
+                {
+                    Debug.LogError("Unexpected error: Interstitial load event fired with null ad and null error.");
+                    return;
+                }
 
-                    PrintStatus("Interstitial ad loaded.");
-                    interstitialAd = ad;
+                // The operation completed successfully.
+                Debug.Log("Interstitial ad loaded with response : " + ad.GetResponseInfo());
+                _interstitialAd = ad;
 
-                    ad.OnAdFullScreenContentOpened += () => { PrintStatus("Interstitial ad opening."); };
-                    ad.OnAdFullScreenContentClosed += () => { PrintStatus("Interstitial ad closed."); };
-                    ad.OnAdImpressionRecorded += () => { PrintStatus("Interstitial ad recorded an impression."); };
-                    ad.OnAdClicked += () => { PrintStatus("Interstitial ad recorded a click."); };
-                    ad.OnAdFullScreenContentFailed += (AdError error) => { PrintStatus("Interstitial ad failed to show with error: " + error.GetMessage()); };
-                    ad.OnAdPaid += (AdValue adValue) =>
-                    {
-                        string msg = string.Format("{0} (currency: {1}, value: {2}",
-                            "Interstitial ad received a paid event.",
-                            adValue.CurrencyCode,
-                            adValue.Value);
-                        PrintStatus(msg);
-                    };
-                });
+                // Register to ad events to extend functionality.
+                InterstitialAdRegisterEventHandlers(ad);
+            });
         }
 
+        /// <summary>
+        /// Shows the ad.
+        /// </summary>
         public bool ShowInterstitialAd()
         {
-            if (interstitialAd != null && interstitialAd.CanShowAd())
+            if (_interstitialAd != null && _interstitialAd.CanShowAd())
             {
-                interstitialAd.Show();
+                Debug.Log("Showing interstitial ad.");
+                _interstitialAd.Show();
                 return true;
             }
             else
             {
-                PrintStatus("Interstitial ad is not ready yet.");
+                Debug.LogError("Interstitial ad is not ready yet.");
+                return false;
             }
-            return false;
         }
 
+        public bool CanShowInterstitialAd()
+        {
+            return _interstitialAd != null && _interstitialAd.CanShowAd();
+        }
+
+        /// <summary>
+        /// Destroys the ad.
+        /// </summary>
         public void DestroyInterstitialAd()
         {
-            if (interstitialAd != null)
+            if (_interstitialAd != null)
             {
-                interstitialAd.Destroy();
-                interstitialAd = null;
+                Debug.Log("Destroying interstitial ad.");
+                _interstitialAd.Destroy();
+                _interstitialAd = null;
             }
+        }
+
+        private void InterstitialAdRegisterEventHandlers(InterstitialAd ad)
+        {
+            // Raised when the ad is estimated to have earned money.
+            ad.OnAdPaid += (AdValue adValue) =>
+            {
+                Debug.Log(String.Format("Interstitial ad paid {0} {1}.",
+                    adValue.Value,
+                    adValue.CurrencyCode));
+            };
+            // Raised when an impression is recorded for an ad.
+            ad.OnAdImpressionRecorded += () =>
+            {
+                Debug.Log("Interstitial ad recorded an impression.");
+            };
+            // Raised when a click is recorded for an ad.
+            ad.OnAdClicked += () =>
+            {
+                Debug.Log("Interstitial ad was clicked.");
+            };
+            // Raised when an ad opened full screen content.
+            ad.OnAdFullScreenContentOpened += () =>
+            {
+                Debug.Log("Interstitial ad full screen content opened.");
+            };
+            // Raised when the ad closed full screen content.
+            ad.OnAdFullScreenContentClosed += () =>
+            {
+                Debug.Log("Interstitial ad full screen content closed.");
+            };
+            // Raised when the ad failed to open full screen content.
+            ad.OnAdFullScreenContentFailed += (AdError error) =>
+            {
+                Debug.LogError("Interstitial ad failed to open full screen content with error : "
+                    + error);
+            };
         }
 
         #endregion
 
         #region REWARDED ADS
         
-        private bool isLoadedReward = false;
-        public bool IsLoadedReward => isLoadedReward;
+        private RewardedAd _rewardedAd;
         
-        
-        public void RequestAndLoadRewardedAd()
+        /// <summary>
+        /// Loads the ad.
+        /// </summary>
+        public void LoadRewardedAd()
         {
-            PrintStatus("Requesting Rewarded ad.");
-            
-            string adUnitId = adUnitIds[(int)AdType.Rewarded];
+            // Clean up the old ad before loading a new one.
+            if (_rewardedAd != null)
+            {
+                DestroyRewardedAd();
+            }
 
-            // create new rewarded ad instance
-            RewardedAd.Load(adUnitId, CreateAdRequest(),
-                (RewardedAd ad, LoadAdError loadError) =>
+            Debug.Log("Loading rewarded ad.");
+
+            // Create our request used to load the ad.
+            var adRequest = new AdRequest();
+
+            // Send the request to load the ad.
+            RewardedAd.Load(adUnitIds[(int)AdType.Rewarded], adRequest, (RewardedAd ad, LoadAdError error) =>
+            {
+                // If the operation failed with a reason.
+                if (error != null)
                 {
-                    isLoadedReward = true;
-                    
-                    if (loadError != null)
-                    {
-                        PrintStatus("Rewarded ad failed to load with error: " +
-                                    loadError.GetMessage());
-                        return;
-                    }
-                    else if (ad == null)
-                    {
-                        PrintStatus("Rewarded ad failed to load.");
-                        return;
-                    }
+                    Debug.LogError("Rewarded ad failed to load an ad with error : " + error);
+                    return;
+                }
+                // If the operation failed for unknown reasons.
+                // This is an unexpected error, please report this bug if it happens.
+                if (ad == null)
+                {
+                    Debug.LogError("Unexpected error: Rewarded load event fired with null ad and null error.");
+                    return;
+                }
 
-                    PrintStatus("Rewarded ad loaded.");
-                    rewardedAd = ad;
+                // The operation completed successfully.
+                Debug.Log("Rewarded ad loaded with response : " + ad.GetResponseInfo());
+                _rewardedAd = ad;
 
-                    ad.OnAdFullScreenContentOpened += () => { PrintStatus("Rewarded ad opening."); };
-                    ad.OnAdFullScreenContentClosed += () => { PrintStatus("Rewarded ad closed."); };
-                    ad.OnAdImpressionRecorded += () => { PrintStatus("Rewarded ad recorded an impression."); };
-                    ad.OnAdClicked += () => { PrintStatus("Rewarded ad recorded a click."); };
-                    ad.OnAdFullScreenContentFailed += (AdError error) => { PrintStatus("Rewarded ad failed to show with error: " + error.GetMessage()); };
-                    ad.OnAdPaid += (AdValue adValue) =>
-                    {
-                        string msg = string.Format("{0} (currency: {1}, value: {2}",
-                            "Rewarded ad received a paid event.",
-                            adValue.CurrencyCode,
-                            adValue.Value);
-                        PrintStatus(msg);
-                    };
-                });
+                // Register to ad events to extend functionality.
+                RewardedAdRegisterEventHandlers(ad);
+            });
         }
 
-        public bool ShowRewardedAd(Action action)
+        /// <summary>
+        /// Shows the ad.
+        /// </summary>
+        public bool ShowRewardedAd(UnityAction action)
         {
-            const string rewardMsg =
-                "Rewarded ad rewarded the user. Type: {0}, amount: {1}.";
-            
-            if (rewardedAd != null && rewardedAd.CanShowAd())
+            if (_rewardedAd != null && _rewardedAd.CanShowAd())
             {
-                rewardedAd.Show((Reward reward) =>
+                Debug.Log("Showing rewarded ad.");
+                _rewardedAd.Show((Reward reward) =>
                 {
                     action?.Invoke();
+                    Debug.Log(String.Format("Rewarded ad granted a reward: {0} {1}",
+                                            reward.Amount,
+                                            reward.Type));
                 });
-                // rewardedAd.Show((Reward reward) =>
-                // {
-                //     // TODO: Reward the user.
-                //     Debug.Log(String.Format(rewardMsg, reward.Type, reward.Amount));
-                // });
                 return true;
             }
             else
             {
-                PrintStatus("Rewarded ad is not ready yet.");
+                Debug.LogError("Rewarded ad is not ready yet.");
                 return false;
             }
         }
 
+        public bool CanShowRewardedAd()
+        {
+            return _rewardedAd != null && _rewardedAd.CanShowAd();
+        }
+
+        /// <summary>
+        /// Destroys the ad.
+        /// </summary>
         public void DestroyRewardedAd()
         {
-            if (rewardedAd != null)
+            if (_rewardedAd != null)
             {
-                rewardedAd.Destroy();
-                rewardedAd = null;
+                Debug.Log("Destroying rewarded ad.");
+                _rewardedAd.Destroy();
+                _rewardedAd = null;
             }
         }
 
-        #endregion
-
-        #region Utility
-
-        /// <summary>
-        /// Loads the Google Ump sample scene.
-        /// </summary>
-        public void LoadUmpScene()
+        private void RewardedAdRegisterEventHandlers(RewardedAd ad)
         {
-            SceneManager.LoadScene("GoogleUmpScene");
+            // Raised when the ad is estimated to have earned money.
+            ad.OnAdPaid += (AdValue adValue) =>
+            {
+                Debug.Log(String.Format("Rewarded ad paid {0} {1}.",
+                    adValue.Value,
+                    adValue.CurrencyCode));
+            };
+            // Raised when an impression is recorded for an ad.
+            ad.OnAdImpressionRecorded += () =>
+            {
+                Debug.Log("Rewarded ad recorded an impression.");
+            };
+            // Raised when a click is recorded for an ad.
+            ad.OnAdClicked += () =>
+            {
+                Debug.Log("Rewarded ad was clicked.");
+            };
+            // Raised when the ad opened full screen content.
+            ad.OnAdFullScreenContentOpened += () =>
+            {
+                Debug.Log("Rewarded ad full screen content opened.");
+            };
+            // Raised when the ad closed full screen content.
+            ad.OnAdFullScreenContentClosed += () =>
+            {
+                Debug.Log("Rewarded ad full screen content closed.");
+            };
+            
+            // Raised when the ad failed to open full screen content.
+            ad.OnAdFullScreenContentFailed += (AdError error) =>
+            {
+                Debug.LogError("Rewarded ad failed to open full screen content with error : "
+                    + error);
+            };
         }
-
-        ///<summary>
-        /// Log the message and update the status text on the main thread.
-        ///<summary>
-        private void PrintStatus(string message)
-        {
-            Debug.Log(message);
-            // MobileAdsEventExecutor.ExecuteInUpdate(() => { statusText.text = message; });
-        }
-
+ 
         #endregion
     }
 }

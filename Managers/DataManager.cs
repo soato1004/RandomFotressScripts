@@ -4,50 +4,44 @@ using System.IO;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using GoogleSheetsToUnity;
-using RandomFortress.Common;
-using RandomFortress.Common.Utils;
-using RandomFortress.Constants;
+
 using RandomFortress.Data;
-using RandomFortress.Game;
-using RotaryHeart.Lib.SerializableDictionary;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Localization.Tables;
+using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-namespace RandomFortress.Manager
+namespace RandomFortress
 {
     // 게임 내에서 사용되는 데이터
     public class DataManager : Singleton<DataManager>
     {
+        public GameData gameData;
         public StageData stageData;
         public TowerUpgradeData towerUpgradeData;
-        public SerializableDictionaryBase<int, TowerData> towerDataDic;
-        public SerializableDictionaryBase<int, MonsterData> monsterStateDic;
-        public SerializableDictionaryBase<int, SkillData> skillDataDic;
-        public SerializableDictionaryBase<int, BulletData> bulletDataDic;
-        public SerializableDictionaryBase<int, AbilityData> abilityDataDic;
-        public SerializableDictionaryBase<string, string> stringTableDic = new SerializableDictionaryBase<string, string>();
+        public SerializedDictionary<int, TowerData> towerDataDic;
+        public SerializedDictionary<int, MonsterData> monsterStateDic;
+        public SerializedDictionary<int, SkillData> skillDataDic;
+        public SerializedDictionary<int, BulletData> bulletDataDic;
+        public SerializedDictionary<int, AbilityData> abilityDataDic;
 
-        private void Awake()
+        public SerializedDictionary<string, string> stringTableDic =
+            new SerializedDictionary<string, string>();
+
+        void Start()
         {
-            towerDataDic = new SerializableDictionaryBase<int, TowerData>();
-            monsterStateDic = new SerializableDictionaryBase<int, MonsterData>();
-            skillDataDic = new SerializableDictionaryBase<int, SkillData>();
-            bulletDataDic = new SerializableDictionaryBase<int, BulletData>();
-            abilityDataDic = new SerializableDictionaryBase<int, AbilityData>();
+            towerDataDic = new SerializedDictionary<int, TowerData>();
+            monsterStateDic = new SerializedDictionary<int, MonsterData>();
+            skillDataDic = new SerializedDictionary<int, SkillData>();
+            bulletDataDic = new SerializedDictionary<int, BulletData>();
+            abilityDataDic = new SerializedDictionary<int, AbilityData>();
         }
 
         public override void Reset()
         {
-            JTDebug.LogColor("DataManager Reset");
-        }
-
-        public override void Terminate()
-        {
-            JTDebug.LogColor("DataManager Terminate");
+            JustDebug.LogColor("DataManager Reset");
         }
 
         #region Addreasable
@@ -55,19 +49,18 @@ namespace RandomFortress.Manager
         // 인게임 시작시
         public async UniTask LoadInfoAsync()
         {
+#if UNITY_EDITOR
             // 스크립터블오브젝트로 데이터 로드
             await LoadAllResourcesAsync();
 
-#if UNITY_EDITOR
             // 스프레드시트로 데이터 로드
             // await LoadDataFromGoogleSheetAsync();
+#elif UNITY_ANDROID
+            await LoadAllResourcesAsync();
 #endif
-
-            // await LoadDataFromTargetSheetAsync(SheetType.AbilityData);
-            
             await Task.CompletedTask;
 
-            JTDebug.LogColor("Data Load Complete", "green");
+            JustDebug.LogColor("Data Load Complete", "green");
         }
 
         public async UniTask LoadAllResourcesAsync(string label = "GlobalData")
@@ -99,10 +92,10 @@ namespace RandomFortress.Manager
                     {
                         await LoadResourceAsync<BulletData>(location, bulletDataDic);
                     }
-                    else if (location.ResourceType == typeof(PlayerData))
-                    {
-                        await LoadResourceAsync<PlayerData>(location);
-                    }
+                    // else if (location.ResourceType == typeof(PlayerData))
+                    // {
+                    //     await LoadResourceAsync<PlayerData>(location);
+                    // }
                     else if (location.ResourceType == typeof(StageData))
                     {
                         await LoadResourceAsync<StageData>(location);
@@ -131,7 +124,7 @@ namespace RandomFortress.Manager
         }
 
         private async Task LoadResourceAsync<T>(IResourceLocation location,
-            SerializableDictionaryBase<int, T> dictionary = null) where T : UnityEngine.Object
+            SerializedDictionary<int, T> SerializedDictionary = null) where T : UnityEngine.Object
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(location);
             await handle.Task;
@@ -143,27 +136,27 @@ namespace RandomFortress.Manager
                 if (typeof(T) == typeof(MonsterData))
                 {
                     MonsterData data = handle.Result as MonsterData;
-                    dictionary[data.index] = handle.Result;
+                    SerializedDictionary[data.index] = handle.Result;
                 }
                 else if (typeof(T) == typeof(TowerData))
                 {
                     TowerData data = handle.Result as TowerData;
-                    dictionary[data.index] = handle.Result;
+                    SerializedDictionary[data.index] = handle.Result;
                 }
                 else if (typeof(T) == typeof(SkillData))
                 {
                     SkillData data = handle.Result as SkillData;
-                    dictionary[data.index] = handle.Result;
+                    SerializedDictionary[data.index] = handle.Result;
                 }
                 else if (typeof(T) == typeof(BulletData))
                 {
                     BulletData data = handle.Result as BulletData;
-                    dictionary[data.index] = handle.Result;
+                    SerializedDictionary[data.index] = handle.Result;
                 }
-                else if (typeof(T) == typeof(PlayerData))
-                {
-                    Account.Instance.SetPlayerData(handle.Result as PlayerData);
-                }
+                // else if (typeof(T) == typeof(PlayerData))
+                // {
+                //     Account.Instance.SetPlayerData(handle.Result as PlayerData);
+                // }
                 else if (typeof(T) == typeof(StageData))
                 {
                     stageData = handle.Result as StageData;
@@ -175,7 +168,7 @@ namespace RandomFortress.Manager
                 else if (typeof(T) == typeof(AbilityData))
                 {
                     AbilityData data = handle.Result as AbilityData;
-                    dictionary[data.index] = handle.Result;
+                    SerializedDictionary[data.index] = handle.Result;
                 }
                 else Debug.Log(fullPath);
             }
@@ -184,7 +177,7 @@ namespace RandomFortress.Manager
                 Debug.LogError("Failed to load " + typeof(T).Name + " at " + location.PrimaryKey);
             }
         }
-        
+
         public TowerData GetTowerData(int towerIndex) => towerDataDic[towerIndex];
 
         //TODO: 계정생성은 서버에서 하고 받는것만 이곳에서..
@@ -212,7 +205,9 @@ namespace RandomFortress.Manager
             public string sheetId;
             public string worksheet;
 
-            public GoogleSheetInfo() { }
+            public GoogleSheetInfo()
+            {
+            }
 
             public GoogleSheetInfo(string sheetId, string worksheet)
             {
@@ -221,9 +216,11 @@ namespace RandomFortress.Manager
             }
         }
 
-        private GoogleSheetInfo[] googleSheetInfos = new GoogleSheetInfo[] {
+        private GoogleSheetInfo[] googleSheetInfos = new GoogleSheetInfo[]
+        {
             new GoogleSheetInfo { sheetId = "1ZNrFfLq_-rNeeJtlT00lhEhPdbQWqZyJKL6teFMQC1U", worksheet = "TowerData" },
-            new GoogleSheetInfo { sheetId = "1ZNrFfLq_-rNeeJtlT00lhEhPdbQWqZyJKL6teFMQC1U", worksheet = "TowerUpgrade" },
+            new GoogleSheetInfo
+                { sheetId = "1ZNrFfLq_-rNeeJtlT00lhEhPdbQWqZyJKL6teFMQC1U", worksheet = "TowerUpgrade" },
             new GoogleSheetInfo { sheetId = "1ZNrFfLq_-rNeeJtlT00lhEhPdbQWqZyJKL6teFMQC1U", worksheet = "TowerCardLV" },
             new GoogleSheetInfo { sheetId = "1ZNrFfLq_-rNeeJtlT00lhEhPdbQWqZyJKL6teFMQC1U", worksheet = "StageData" },
             new GoogleSheetInfo { sheetId = "1ZNrFfLq_-rNeeJtlT00lhEhPdbQWqZyJKL6teFMQC1U", worksheet = "MonsterData" },
@@ -243,7 +240,7 @@ namespace RandomFortress.Manager
             SkillData,
             AbilityData
         }
-        
+
         private int loadCount = 0;
 
         // TODO: 테스트용
@@ -251,18 +248,18 @@ namespace RandomFortress.Manager
         {
             GoogleSheetInfo info = googleSheetInfos[(int)sheetType];
             loadCount = 0;
-            
+
             SpreadsheetManager.Read(new GSTU_Search(info.sheetId, info.worksheet), SetAbilityData);
-            
+
             // isLoadComplete all true check
             while (loadCount < 1) // 현재 총 4개 데이터 로드중
             {
                 await Task.Delay(10);
             }
-            
+
             await Task.CompletedTask;
         }
-        
+
         // 스프레드시트 연동
         public async UniTask LoadDataFromGoogleSheetAsync()
         {
@@ -302,7 +299,7 @@ namespace RandomFortress.Manager
             // 어빌리티 데이터
             info = googleSheetInfos[i++];
             SpreadsheetManager.Read(new GSTU_Search(info.sheetId, info.worksheet), SetAbilityData);
-            
+
             // isLoadComplete all true check
             while (loadCount < loadCompleteCount) // 현재 총 4개 데이터 로드중
             {
@@ -385,13 +382,12 @@ namespace RandomFortress.Manager
                     bulletIndex = int.Parse(ss[key, "bulletIndex"].value),
                     tier = int.Parse(ss[key, "tier"].value),
                     salePrice = int.Parse(ss[key, "SalePrice"].value),
-                    dynamicData =
-                    {
-                        [0] = int.Parse(ss[key, "Extra 1"].value),
-                        [1] = int.Parse(ss[key, "Extra 2"].value),
-                        [2] = int.Parse(ss[key, "Extra 3"].value)
-                    }
                 };
+
+                string json = ss[key, "Extra"].value;
+                towerInfo.extraInfo = new ExtraInfo();
+                towerInfo.extraInfo = JsonUtility.FromJson<ExtraInfo>(json);
+
 
                 if (towerDataDic.ContainsKey(towerInfo.index))
                 {
@@ -405,15 +401,13 @@ namespace RandomFortress.Manager
 
                     towerDataDic.Add(towerData.index, towerData);
                     towerDataDic[towerData.index].towerInfoDic.Add(towerInfo.tier, towerInfo);
-
-                    // AssetDatabase.CreateAsset(towerData, path + towerInfo.name + ".asset");
                 }
             }
+
 #if UNITY_EDITOR
             foreach (var towerData in towerDataDic)
                 AssetDatabase.CreateAsset(towerData.Value, path + towerData.Value.towerName + ".asset");
 #endif
-
 
             loadCount++;
         }
@@ -501,6 +495,7 @@ namespace RandomFortress.Manager
 #if UNITY_EDITOR
                 AssetDatabase.CreateAsset(monsterData, path + monsterData.unitName + ".asset");
 #endif
+
             }
 
             loadCount++;
@@ -607,7 +602,7 @@ namespace RandomFortress.Manager
 
                 abilityDataDic.Add(abilityData.index, abilityData);
 #if UNITY_EDITOR
-                AssetDatabase.CreateAsset(abilityData, path + abilityData.rarity+"_" +abilityData.abilityName + ".asset");
+                AssetDatabase.CreateAsset(abilityData, path + abilityData.rarity + "_" + abilityData.abilityName + ".asset");
 #endif
             }
 

@@ -1,6 +1,6 @@
-using RandomFortress.Constants;
 
-namespace RandomFortress.Game
+
+namespace RandomFortress
 {
     public struct DamageInfo
     {

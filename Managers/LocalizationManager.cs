@@ -1,26 +1,18 @@
-using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using RandomFortress.Common;
-using RandomFortress.Common.Utils;
-using RandomFortress.Manager;
-using RotaryHeart.Lib.SerializableDictionary;
+
+
 using UnityEngine;
 using UnityEngine.Localization.Settings;
 
-namespace DefaultNamespace
+namespace RandomFortress
 {
     public class LocalizationManager : Singleton<LocalizationManager>
     {
         public override void Reset()
         {
-            JTDebug.LogColor("LocalizationManager Reset");
-        }
-
-        public override void Terminate()
-        {
-            JTDebug.LogColor("LocalizationManager Terminate");
+            JustDebug.LogColor("LocalizationManager Reset");
         }
 
         // public async UniTask LoadTableAsync(string tableName)
@@ -35,7 +27,7 @@ namespace DefaultNamespace
         //     // dict["AccusedCard_DisplayName"] = tableOp.Result.GetEntry("AccusedCard_DisplayName")?.GetLocalizedString();
         //
         //
-        //     // SerializableDictionaryBase<string, string> stringTableDic = DataManager.Instance.stringTableDic;
+        //     // SerializedDictionary<string, string> stringTableDic = DataManager.Instance.stringTableDic;
         //     
         //     // We can add them all if we need to
         //     foreach(var entry in tableOp.Result)
@@ -50,7 +42,7 @@ namespace DefaultNamespace
         //     // Now get the main entry
         //     // var smartFormatEntry = tableOp.Result.GetEntry("My String");
         //
-        //     // Translate it using the dictionary
+        //     // Translate it using the SerializedDictionary
         //     // E.G "My name is {AccusedCard_DisplayName} => My name is Karl
         //     // var translatedString = smartFormatEntry.GetLocalizedString(dict);
         //

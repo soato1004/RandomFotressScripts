@@ -1,9 +1,10 @@
-using RandomFortress.Constants;
+using System.Collections.Generic;
+
 using RandomFortress.Data;
-using RandomFortress.Game;
-using RandomFortress.Manager;
-using RotaryHeart.Lib.SerializableDictionary;
+
+
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace RandomFortress.Menu
 {
@@ -64,7 +65,7 @@ namespace RandomFortress.Menu
             switch (SelectTap)
             {
                 case CardCollection.Tower:
-                    SerializableDictionaryBase<int, TowerData> TowerDatas = DataManager.Instance.towerDataDic;
+                    SerializedDictionary<int, TowerData> TowerDatas = DataManager.Instance.towerDataDic;
                     foreach (var towerData in TowerDatas)
                     {
                         TowerData data = towerData.Value; 
@@ -73,7 +74,7 @@ namespace RandomFortress.Menu
                     break;
                 
                 case CardCollection.Skill:
-                    SerializableDictionaryBase<int, SkillData> SkillDatas = DataManager.Instance.skillDataDic;
+                    SerializedDictionary<int, SkillData> SkillDatas = DataManager.Instance.skillDataDic;
                     foreach (var skillData in SkillDatas)
                     {
                         SkillData data = skillData.Value; 
@@ -94,25 +95,23 @@ namespace RandomFortress.Menu
             UpdateScroll();
         }
         
-        // 플레이어에게 설정된 타워 또는 스킬을 클릭
-
-        // 스크롤의 타워 또는 스킬을 클릭
+        //TODO: 스크롤의 타워 또는 스킬을 클릭
         public void OnItemClick(int index)
         {
-            switch (SelectTap)
-            {
-                case CardCollection.Tower:
-                    int towerIndex = items[index].itemIndex;
-                    Account.Instance.TowerDeckAddOrRemove(towerIndex);
-                    UpdatePlayerDeck();
-                    break;
-                
-                case CardCollection.Skill:
-                    int skillIndex = items[index].itemIndex;
-                    Account.Instance.SkillDeckAddOrRemove(skillIndex);
-                    UpdatePlayerDeck();
-                    break;
-            }
+            // switch (SelectTap)
+            // {
+            //     case CardCollection.Tower:
+            //         int towerIndex = items[index].itemIndex;
+            //         Account.Instance.TowerDeckAddOrRemove(towerIndex);
+            //         UpdatePlayerDeck();
+            //         break;
+            //     
+            //     case CardCollection.Skill:
+            //         int skillIndex = items[index].itemIndex;
+            //         Account.Instance.SkillDeckAddOrRemove(skillIndex);
+            //         UpdatePlayerDeck();
+            //         break;
+            // }
         }
         
         

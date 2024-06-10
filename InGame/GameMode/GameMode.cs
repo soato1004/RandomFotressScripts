@@ -1,19 +1,18 @@
-using RandomFortress.Game;
 using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.Tilemaps;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class GameMode : MonoBehaviour
     {
+        public Transform boardUI; 
+            
         public Transform commonMap;
         public GameMap[] gameMap;
-        public Transform bulletParent;
-        public Transform monsterParent;
-        public Transform effectParent;
-        public Transform skillParent;
-        public Transform uiParent;
+        // public Transform bulletParent;
+        // public Transform monsterParent;
+        // public Transform effectParent;
+        // public Transform skillParent;
+        // public Transform uiParent;
 
         public virtual void Init()
         {

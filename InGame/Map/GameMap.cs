@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class GameMap : MonoBehaviour
     {

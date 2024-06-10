@@ -1,44 +1,39 @@
-﻿using System;
-using System.Collections;
-using DefaultNamespace;
-using RandomFortress.Constants;
-using RandomFortress.Manager;
-using UnityEngine;
+﻿using System.Collections;
 using GoogleAds;
-using RandomFortress.Common.Utils;
-using RandomFortress.Game;
+using UnityEngine;
 using RandomFortress.Menu;
 using UnityEngine.UI;
 using Application = UnityEngine.Device.Application;
 
-namespace RandomFortress.Scene
+namespace RandomFortress
 {
     public class Lobby : MonoBehaviour
     {
         public RectTransform bottomUI;
-        public TutorialController tutorialController;
+        // public TutorialController tutorialController;
         public Button rewardAdButton; 
-        [SerializeField] private RankBoard rankBoard;
-
-        private bool isReward = false;
         
+        [SerializeField] private RankBoard rankBoard;
+        [SerializeField] private GameObject dim;
 
         private Vector3 ori;
         private float banner_height;
 
         private void Awake()
         {
+            Application.targetFrameRate = 60;
+            // 화면이 자동으로 꺼지지 않도록 설정
+            Screen.sleepTimeout = 60;
             ori = bottomUI.anchoredPosition;
+            MainManager.Instance.Lobby = this;
         }
 
         private void Start()
         {
-            // 최초 접근시 업데이트
-            UpdateLobbyUI();
-            
             // 배경음
             SoundManager.Instance.PlayBgm("bgm_lobby");
             
+            // 튜토리얼 
             // if ( Account.Instance.Data.isTutorialLobby )
             // {
             //     StartCoroutine(tutorialController.StartTutorialCor());
@@ -49,25 +44,30 @@ namespace RandomFortress.Scene
             {
                 ShowBanner();
             }
-
+            
+            //
             Account.Instance.InitAdDebuff();
         }
         
-        public void OnPlayButtonClick()
+        public void OnPlayButtonClick(int index)
         {
+            MainManager.Instance.gameType = (GameType)index;
             SoundManager.Instance.PlayOneShot("button_click");
             
-            if(MainManager.Instance.GamePlayCount != 0)
+            if(MainManager.Instance.ShowPlayAd)
                 StartCoroutine(ShowInterstitialAdCor());
             else
-                GameStart();
+                StartCoroutine(GameStartCor());
         }
 
-        // 게임 모드별로 다르게 구현
-        private void GameStart()
+        private IEnumerator GameStartCor()
         {
+            // BGM끄기
+            SoundManager.Instance.StopBgm();
+            
             // 배너광고 닫기
             BannerClose();
+            yield return new WaitForSeconds(0.1f);
             
             // 게임 모드별 실행
             switch (MainManager.Instance.gameType)
@@ -121,98 +121,128 @@ namespace RandomFortress.Scene
         // 배너광고 표시
         private void ShowBanner()
         {
-            BannerOpen();
+            StartCoroutine(ShowBannerAdCor());
         }
 
-        // 배너광고 표시시에 하단 UI 위치 조정
-        private void BannerOpen()
+        private IEnumerator ShowBannerAdCor()
         {
-            if (GoogleAdMobController.Instance.ShowBannerAd())
+            if (GoogleAdMobController.Instance._bannerView == null)
+                GoogleAdMobController.Instance.LoadBannerAd();
+            
+            float timer = 0;
+            do
             {
-                banner_height = GoogleAdMobController.Instance.Banner.GetHeightInPixels();
-                Vector3 pos = bottomUI.anchoredPosition;
-                pos.y += banner_height;
-                bottomUI.anchoredPosition = pos;
-            }
+                if (GoogleAdMobController.Instance._bannerView != null)
+                {
+                    GoogleAdMobController.Instance.ShowBannerAd();
+                    banner_height = GoogleAdMobController.Instance._bannerView.GetHeightInPixels();
+                    Vector3 pos = bottomUI.anchoredPosition;
+                    pos.y += banner_height;
+                    bottomUI.anchoredPosition = pos;
+                    break;
+                }
+
+                yield return new WaitForSecondsRealtime(0.2f);
+                
+                timer += 0.2f;
+            } while (timer < 5f);
         }
 
         private void BannerClose()
         {
-            GoogleAdMobController.Instance.Banner.Hide();
+            GoogleAdMobController.Instance.HideBannerAd();
             bottomUI.anchoredPosition = ori;
         }
 
+        // 보상형광고 시청로직
         public void OnRewardAdClick(int index)
         {
-            rewardAdButton.interactable = false;
             StartCoroutine(ShowRewardAdCor());
         }
-        
-        // 보상형광고 시청로직
+
         private IEnumerator ShowRewardAdCor()
         {
-            float timer = 0;
-            bool isShow = false;
+            rewardAdButton.interactable = false;
 
-            do
+            if (!GoogleAdMobController.Instance.CanShowRewardedAd())
             {
-                isShow = GoogleAdMobController.Instance.ShowRewardedAd(() =>
-                {
-                    // 광고 시청완료시 보상
-                    Account.Instance.AddAdDebuff(AdDebuffType.AbilityCard);
-                    rewardAdButton.interactable = false;
-                    rewardAdButton.gameObject.SetActive(false);
-                    SoundManager.Instance.ResumeBgm();
-                } );
-                if (isShow)
-                    break;
-
+                Debug.Log("보상형광고 리로드");
+                GoogleAdMobController.Instance.LoadRewardedAd();
                 yield return new WaitForSeconds(0.5f);
-                timer += 0.5f;
-            } while (timer < 5f) ;
-
-            // 광고재생 성공시에 배경음 끄기
-            SoundManager.Instance.PauseBgm();
-            
-            if (!isShow)
-            {
-                JTDebug.LogColor("Reward Ad Show Fail");
-                rewardAdButton.interactable = true;
             }
+
+            bool isShow = false;
+            float timer = 0f;
+            while (timer < 3f)
+            {
+                isShow = GoogleAdMobController.Instance.ShowRewardedAd(GiveReward);
+                
+                if (isShow) break;
+                yield return new WaitForSeconds(0.2f);
+                timer += 0.2f;
+            }
+
+            if (isShow)
+            {
+                SoundManager.Instance.PauseBgm();
+                dim.SetActive(true);
+            }
+            else
+                rewardAdButton.interactable = true;
+        }
+
+        private void GiveReward()
+        {
+            Debug.Log("GiveReward 접근");
+            // 광고 시청완료시 보상
+            Account.Instance.AddAdDebuff(AdDebuffType.AbilityCard);
+            rewardAdButton.interactable = false;
+            rewardAdButton.gameObject.SetActive(false);
+            SoundManager.Instance.ResumeBgm();
+            rewardAdButton.interactable = true;
         }
 
         // 최초 게임시작을 제외하고 게임시작하기전 광고를 봐야한다
         private IEnumerator ShowInterstitialAdCor()
         {
-            GoogleAdMobController.Instance.RequestAndLoadInterstitialAd();
-            GoogleAdMobController.Instance.interstitialAd.OnAdFullScreenContentClosed += () =>
-            {
-                SoundManager.Instance.ResumeBgm();
-                GameStart();
-            };
-            
-            float timer = 0;
-            bool isShow = false;
+            MainManager.Instance.ShowPlayAd = false;
 
-            do
+            if (!GoogleAdMobController.Instance.CanShowInterstitialAd())
+            {
+                Debug.Log("전면광고 리로드");
+                GoogleAdMobController.Instance.LoadInterstitialAd();
+            }
+
+            bool isShow = false;
+            
+            float timer = 0f;
+            while (timer < 3f)
             {
                 isShow = GoogleAdMobController.Instance.ShowInterstitialAd();
-                if (isShow)
-                    break;
-
-                yield return new WaitForSeconds(0.5f);
-                timer += 0.5f;
-            } while (timer < 5f) ;
+                if (isShow) break;
+                yield return new WaitForSeconds(0.2f);
+                timer += 0.2f;
+            }
             
-            if (!isShow)
-                JTDebug.LogColor("Interstitial Ad Show Fail");
-            else
+            if (GoogleAdMobController.Instance.InterstitialAd != null)
+                GoogleAdMobController.Instance.InterstitialAd.OnAdFullScreenContentClosed += HandleOnInterstitialAdClosed;
+
+            if (isShow)
             {
-                // 광고재생 성공시에 배경음 끄기
                 SoundManager.Instance.PauseBgm();
+                dim.SetActive(true);
             }
         }
 
+        private void HandleOnInterstitialAdClosed()
+        {
+            if (this != null)
+            {
+                dim.SetActive(false);
+                StartCoroutine(GameStartCor());
+            }
+        }
+        
         #endregion
     }
 }

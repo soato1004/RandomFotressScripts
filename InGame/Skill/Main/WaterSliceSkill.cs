@@ -1,9 +1,11 @@
 ﻿using System.Collections;
-using RandomFortress.Manager;
+
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace RandomFortress.Game
+
+namespace RandomFortress
 {
     /// <summary>
     /// 히어로스킬. 적 몬스터 모두에게 수속성 데미지
@@ -12,10 +14,8 @@ namespace RandomFortress.Game
     {
         private GameObject _prefab;
         private int _damage;
+        private int _targetCount;
         private List<ParticleSystem> particleList = new List<ParticleSystem>();
-        
-        public float skillCoolTime => _coolTime; // 스킬의 사용딜레이
-        public float skillCurrentCoolTime { get; private set; } // 현재 스킬 대기시간
 
         public override void Init(int skillIndex, GamePlayer gPlayer, SkillButton button)
         {
@@ -23,6 +23,7 @@ namespace RandomFortress.Game
 
             _coolTime = data.coolTime;
             _damage = data.dynamicData[0];
+            _targetCount = data.dynamicData[1];
             
             player = gPlayer;
             _skillButton = button;
@@ -39,38 +40,45 @@ namespace RandomFortress.Game
 
         public override void UseSkill(params object[] _params)
         {
-            StartCoroutine(ShowCor());
+            StartCoroutine(UseSkillCor());
         }
         
-        public IEnumerator ShowCor()
+        private IEnumerator UseSkillCor()
         {
             StartCoroutine(WaitCoolTimeCor(_coolTime));
             
             // 적 몬스터 
-            List<MonsterBase> monsterList = new List<MonsterBase>(player.monsterList);
+            var array = player.monsterOrder.ToArray();
+            int damage = _damage * GameManager.Instance.myPlayer.stageProcess;
 
-            int dmg = _damage * GameManager.Instance.myPlayer.stageProcess;
-            
-            foreach (var monster in monsterList)
+            int count = 0;
+            for (int i=0; i<array.Length; ++i)
             {
-                if (!monster.gameObject.activeSelf)
+                MonsterBase monster = array[i];
+                if (monster == null || monster.gameObject == null || monster.gameObject.activeSelf == false)
                     continue;
                 
-                GameObject go = Instantiate(_prefab, GameManager.Instance.gameMode.effectParent);
+                GameObject go = Instantiate(_prefab, SpawnManager.Instance.effectParent);
                 go.transform.position = monster.transform.position;
                 
                 ParticleSystem particle = go.GetComponent<ParticleSystem>();
                 particle.Play();
                 particleList.Add(particle);
-                monster.Hit(dmg);
-                yield return new WaitForSeconds(0.02f);
+                monster.Hit(damage);
+                if (++count >= _targetCount)
+                    break;
+                
+                yield return Utils.WaitForSeconds(0.02f);
             }
             
-            yield return new WaitForSeconds(1f);
+            yield return Utils.WaitForSeconds(0.5f);
             
-            GameUIManager.Instance.HideSkillDim();
+            bool isMine = GameManager.Instance.myPlayer == player;
+            GameUIManager.Instance.HideSkillDim(isMine);
             foreach (var particle in particleList)
                 Destroy(particle);
+            
+            player.SkillEnd(data.index);
             
         }
     }

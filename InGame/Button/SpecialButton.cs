@@ -1,7 +1,6 @@
 using System.Collections;
-using RandomFortress.Constants;
-using RandomFortress.Game;
-using RandomFortress.Manager;
+using RandomFortress;
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,10 +14,10 @@ public class SpecialButton : ButtonBase
     [SerializeField] private GameObject CooltimeBG;
     [SerializeField] private TextMeshProUGUI CooltimeText;
     [SerializeField] private TextMeshProUGUI Name;
-
+    
     public void OnSkipButtonClick()
     {
-        bool isSkip = GameManager.Instance.SkipWaitTime();
+        bool isSkip = GameManager.Instance.SkipStage();
 
         if (isSkip)
         {
@@ -28,6 +27,12 @@ public class SpecialButton : ButtonBase
             
             StartCoroutine(CooltimeCor(GameConstants.SkipDelayTime));
         }
+    }
+
+    public void OnGameSpeedButtonClick()
+    {
+        GameManager.Instance.ChangeGameSpeed();
+        Name.text = "x" + GameManager.Instance.TimeScale;
     }
 
     private IEnumerator CooltimeCor(float time)
@@ -40,8 +45,8 @@ public class SpecialButton : ButtonBase
         
         while (waitTime < time)
         {
-            OneSecond += Time.deltaTime;
-            waitTime += Time.deltaTime;
+            OneSecond += Time.deltaTime * GameManager.Instance.TimeScale;
+            waitTime += Time.deltaTime * GameManager.Instance.TimeScale;
 
             if (OneSecond >= 1f)
             {

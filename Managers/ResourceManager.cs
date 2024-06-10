@@ -1,56 +1,33 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using RandomFortress.Common;
-using RandomFortress.Common.Utils;
 using RandomFortress.Data;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.U2D;
-using Task = System.Threading.Tasks.Task;
-using Google.Play.AssetDelivery;
-using RotaryHeart.Lib.SerializableDictionary;
-using UnityEngine.SceneManagement;
 
-namespace RandomFortress.Manager
+
+namespace RandomFortress
 {
     // 게임 내에서 사용되는 리소스
     public class ResourceManager : Singleton<ResourceManager>
     {
         public bool isResourcesLoaded = false;
         
-        public SerializableDictionaryBase<string, GameObject> PrefabDic = new SerializableDictionaryBase<string, GameObject>();
-        public SerializableDictionaryBase<string, AudioClip> SoundDic = new SerializableDictionaryBase<string, AudioClip>();
-        public SerializableDictionaryBase<string, SpriteAtlas> SpriteAtlasDic = new SerializableDictionaryBase<string, SpriteAtlas>();
-        public SerializableDictionaryBase<string, Material> MaterialDic = new SerializableDictionaryBase<string, Material>();
-        // public Dictionary<string, ParticleSystem> EffectDic = new Dictionary<string, ParticleSystem>();
-        // public Dictionary<string, Asset> AssetDic = new Dictionary<string, Asset>();
-
-        //단일 에셋
-        // Addressables.LoadAssetAsync<TObject>('key' 또는 'IResourceLocation') : 에셋을 메모리에 로드.
-        // Addressables.InstantiateAsync('key' 또는 'IResourceLocation') : 에셋을 게임오브젝트로 생성한다.
-        // Addressables.LoadSceneAsync('key'  또는 'IResourceLocation') : 씬을 로드한다.
-        // AssetReference.LoadAssetAsync<TObject>() : 에셋 레퍼런스로 에셋을 메모리에 로드한다.
-        // AssetReference.InstantiateAsync() : 에셋 레퍼런스로 게임오브젝트를 생성한다.
-        // AssetReference.LoadSceneAsync() : 에셋 레퍼런스로 씬을 로드한다.
-        
-        // 다수 에셋로드
-        // Addressables.LoadAssetsAsync<TObject>('key' 또는 'IResourceLocation', 'Action<TObject> callback')
+        public SerializedDictionary<string, GameObject> PrefabDic = new SerializedDictionary<string, GameObject>();
+        public SerializedDictionary<string, AudioClip> SoundDic = new SerializedDictionary<string, AudioClip>();
+        public SerializedDictionary<string, SpriteAtlas> SpriteAtlasDic = new SerializedDictionary<string, SpriteAtlas>();
+        public SerializedDictionary<string, Material> MaterialDic = new SerializedDictionary<string, Material>();
 
         private IList<IResourceLocation> _locations;
         
-        
         public override void Reset()
         {
-            JTDebug.LogColor("ResourceManager Reset");
-        }
-        
-        public override void Terminate() 
-        {
-            JTDebug.LogColor("ResourceManager Terminate");
+            JustDebug.LogColor("ResourceManager Reset");
         }
 
         #region Load
@@ -130,7 +107,7 @@ namespace RandomFortress.Manager
                     }
                     else
                     {
-                        Debug.Log("unknow Type " + location.ResourceType + ", "+location.PrimaryKey);
+                        // Debug.Log("unknow Type " + location.ResourceType + ", "+location.PrimaryKey);
                     }
                 }
             }
@@ -142,10 +119,10 @@ namespace RandomFortress.Manager
             await Task.CompletedTask;
             
             isResourcesLoaded = true;
-            JTDebug.LogColor("Resource Load Complete", "green");
+            JustDebug.LogColor("Resource Load Complete", "green");
         }
         
-        private async Task LoadResourceAsync<T>(IResourceLocation location, SerializableDictionaryBase<string, T> dictionary) where T : UnityEngine.Object
+        private async Task LoadResourceAsync<T>(IResourceLocation location, SerializedDictionary<string, T> SerializedDictionary) where T : UnityEngine.Object
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(location);
             await handle.Task;
@@ -154,12 +131,12 @@ namespace RandomFortress.Manager
             {
                 string fullPath = location.PrimaryKey;
                 string fileNmae = Path.GetFileNameWithoutExtension(fullPath);
-                dictionary[fileNmae] = handle.Result;
-                Debug.Log(fullPath);
+                SerializedDictionary[fileNmae] = handle.Result;
+                JustDebug.Log(fullPath);
             }
             else
             {
-                Debug.LogError("Failed to load " + typeof(T).Name + " at " + location.PrimaryKey);
+                JustDebug.LogError("Failed to load " + typeof(T).Name + " at " + location.PrimaryKey);
             }
         }
 
@@ -177,12 +154,23 @@ namespace RandomFortress.Manager
                     return PrefabDic[key];   
                 }
                 
-                JTDebug.LogError("PrefabDic "+key+" Not Found");
+                JustDebug.LogError("PrefabDic "+key+" Not Found");
                 return null;
             }
             
-            JTDebug.LogError("Monster "+index+" Not Found");
+            JustDebug.LogError("Monster "+index+" Not Found");
             return null;
+        }
+
+        public string GetMonsterPrefabName(int index)
+        {
+            if (DataManager.Instance.monsterStateDic.ContainsKey(index))
+            {
+                return DataManager.Instance.monsterStateDic[index].prefabName;
+            }
+            
+            JustDebug.LogError("Monster "+index+" Not Found");
+            return "";
         }
 
         public GameObject GetPrefab(string name)
@@ -192,11 +180,10 @@ namespace RandomFortress.Manager
                 return PrefabDic[name];
             }
             
-            JTDebug.LogError("Prefab "+name+" Not Found");
+            JustDebug.LogError("Prefab "+name+" Not Found");
             return null;
         }
-
-        //TODO: 타워 티어별 이미지 제공
+        
         public Sprite GetTower(int towerIndex, int tier)
         {
             TowerData target = DataManager.Instance.towerDataDic[towerIndex];
@@ -212,7 +199,10 @@ namespace RandomFortress.Manager
         
         public Sprite GetSprite(string imgName)
         {
-            return SpriteAtlasDic["Ingame_Atlas"].GetSprite(imgName);
+            Sprite sprite = SpriteAtlasDic["Common_Atlas"].GetSprite(imgName);
+            if (sprite == null)
+                Debug.Log("sprite : " + imgName + ", NULL!!");
+            return sprite;
         }
         
         public Material GetMaterial(string materialName)
@@ -222,7 +212,7 @@ namespace RandomFortress.Manager
                 return MaterialDic[materialName];
             }
             
-            JTDebug.LogError("Material "+name+" Not Found");
+            JustDebug.LogError("Material "+name+" Not Found");
             return null;
         }
         

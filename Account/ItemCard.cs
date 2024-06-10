@@ -1,4 +1,4 @@
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class ItemCard
     {

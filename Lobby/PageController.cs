@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using RandomFortress.Manager;
+
 using UnityEngine;
 using UnityEngine.UI;
 

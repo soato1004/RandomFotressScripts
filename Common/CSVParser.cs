@@ -1,10 +1,10 @@
 // using UnityEngine;
 // using System.Collections.Generic;
 // using System.Text.RegularExpressions;
-// using RandomFortress.Constants;
+// 
 // using RandomFortress.Data;
 //
-// namespace RandomFortress.Game
+// namespace RandomFortress
 // {
 //     public static class CSVParser
 //     {

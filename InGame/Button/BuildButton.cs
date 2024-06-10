@@ -1,12 +1,19 @@
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class BuildButton : ButtonBase
     {
         [SerializeField] private Button button;
         [SerializeField] private TextMeshProUGUI Cost;
+        
+        // 영웅타워를 랜덤으로 짓는다
+        public void OnBuildButtonClick()
+        {
+            GameManager.Instance.BuildRandomTower();
+        }
     }
 }

@@ -1,4 +1,4 @@
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     [System.Serializable]
     public class TowerCard : ItemCard

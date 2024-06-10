@@ -1,6 +1,4 @@
-using System;
-using RandomFortress.Game;
-using RandomFortress.Manager;
+
 using TMPro;
 using UnityEngine;
 

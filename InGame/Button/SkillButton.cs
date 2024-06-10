@@ -1,8 +1,9 @@
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Game
+namespace RandomFortress
 {
     public class SkillButton : ButtonBase
     {
@@ -12,5 +13,18 @@ namespace RandomFortress.Game
         public TextMeshProUGUI skillName;  // 스킬 이름
         public GameObject wait;       // 스킬 사용대기
         public TextMeshProUGUI coolTime; // 쿨타임 텍스트
+        public Button button;
+
+        private void Awake()
+        {
+            button = GetComponent<Button>();
+        }
+
+
+        // 스킬버튼
+        public void OnSkillButtonClick(int index)
+        {
+            GameUIManager.Instance.OnSkillButtonClick(index);
+        }
     }
 }

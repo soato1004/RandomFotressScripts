@@ -1,5 +1,6 @@
 using RandomFortress.Data;
-using RandomFortress.Manager;
+
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,7 +38,7 @@ namespace RandomFortress.Menu
             Icon.sprite = ResourceManager.Instance.GetTower(data.index, 1);
             
             
-            Common.Utils.ImageUtils.ImageSizeToFit(TARGET_WIDTH, TARGET_HEIGHT, ref Icon);
+            Utils.ImageSizeToFit(TARGET_WIDTH, TARGET_HEIGHT, ref Icon);
         }
 
         public void SetSkill(SkillData data)
@@ -51,7 +52,7 @@ namespace RandomFortress.Menu
             Icon.gameObject.SetActive(true);
             Icon.sprite = ResourceManager.Instance.GetSprite(data.skillName);
 
-            Common.Utils.ImageUtils.ImageSizeToFit(TARGET_WIDTH, TARGET_HEIGHT, ref Icon);
+            Utils.ImageSizeToFit(TARGET_WIDTH, TARGET_HEIGHT, ref Icon);
         }
     }
 }

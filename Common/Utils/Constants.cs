@@ -1,4 +1,4 @@
-﻿namespace RandomFortress.Common.Utils
+﻿namespace RandomFortress
 {
     public static class LogColor
     {

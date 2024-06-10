@@ -1,7 +1,7 @@
 using UnityEngine;
 using Screen = UnityEngine.Device.Screen;
 
-namespace RandomFortress.Common
+namespace RandomFortress
 {
     public class SafeAreaAdapter : MonoBehaviour
     {

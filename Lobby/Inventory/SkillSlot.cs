@@ -1,6 +1,7 @@
+
 using RandomFortress.Data;
-using RandomFortress.Game;
-using RandomFortress.Manager;
+
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -39,7 +40,7 @@ namespace RandomFortress.Menu
             int width = slotIndex == 0 ? MAIN_WIDTH : TARGET_WIDTH;
             int height = slotIndex == 0 ? MAIN_HEIGHT : TARGET_HEIGHT;
             
-            Common.Utils.ImageUtils.ImageSizeToFit(width, height, ref Icon);
+            Utils.ImageSizeToFit(width, height, ref Icon);
         }
     }
 }

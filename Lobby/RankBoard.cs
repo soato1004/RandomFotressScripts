@@ -1,6 +1,6 @@
 using RandomFortress.Data;
-using RandomFortress.Game;
-using RandomFortress.Manager;
+
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,10 +16,10 @@ namespace RandomFortress.Menu
 
         public void UpdateRankBoard()
         {
-            if (Account.Instance.Data.BestGameResult == null)
+            if (Account.Instance.Data.bestGameResult == null)
                 return;
 
-            GameResult result = Account.Instance.Data.BestGameResult;
+            GameResult result = Account.Instance.Data.bestGameResult;
             clearTime.text = (result.clearTime/60).ToString("D2")+":"+(result.clearTime%60).ToString("D2");
             maxStage.text = result.maxClearStage.ToString();
             

@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using RandomFortress.Constants;
-using RandomFortress.Data;
-using RandomFortress.Manager;
-using UnityEngine;
 
-namespace RandomFortress.Game
+using RandomFortress.Data;
+
+
+namespace RandomFortress
 {
-    public class TowerUpgrade : MonoBehaviour
+    public class TowerUpgrade
     {
         public int TowerIndex;
         public int TowerUpgradeLv;
@@ -15,18 +14,18 @@ namespace RandomFortress.Game
         public List<CardUpgradeInfo> CardLvData { get; private set; }  // 카드 업그레이드 정보
         public List<TowerUpgradeInfo> UpgradeData { get; private set; } // 인게임 타워 업그레이드 수치
         
-        public TowerUpgrade(int towerIndex, int cardLV)
+        public TowerUpgrade(int towerIndex, int cardLv)
         {
-            this.TowerIndex = towerIndex;
-            this.TowerUpgradeLv = 0;
-            this.UpgradeCost = GameConstants.TowerCost;
+            TowerIndex = towerIndex;
+            TowerUpgradeLv = 0;
+            UpgradeCost = GameConstants.TowerCost;
 
             TowerUpgradeData data = DataManager.Instance.towerUpgradeData;
             CardLvData = data.CardLvData;
             UpgradeData = data.UpgradeData;
             
             // TODO : 해당 부분은 타워별로 파싱하는부분을 따로둔다
-            CardLvBuff = cardLV == 1 ? 1 : ((float)CardLvData[cardLV - 1].CardLVData[0] / 100); // 현재 어택데미지로 되어있음
+            CardLvBuff = cardLv == 1 ? 1 : ((float)CardLvData[cardLv - 1].CardLVData[0] / 100); // 현재 어택데미지로 되어있음
         }
 
         public void Upgrade()

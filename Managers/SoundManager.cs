@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using RandomFortress.Common;
-using RandomFortress.Common.Utils;
-using RotaryHeart.Lib.SerializableDictionary;
-using UnityEngine;
 
-namespace RandomFortress.Manager
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace RandomFortress
 {
     public class SoundManager : Singleton<SoundManager>
     {
@@ -12,19 +11,14 @@ namespace RandomFortress.Manager
         [SerializeField] private AudioSource sfxPlayer;
 
         private string currentPlayKey;
-        private SerializableDictionaryBase<string, AudioClip> soundDic;
+        private SerializedDictionary<string, AudioClip> soundDic;
         
         
         public override void Reset()
         {
-            JTDebug.LogColor("AudioManager Reset");
+            JustDebug.LogColor("SoundManager Reset");
 
             soundDic = ResourceManager.Instance.SoundDic;
-        }
-        
-        public override void Terminate() 
-        {
-            JTDebug.LogColor("AudioManager Terminate");
         }
 
         public enum SoundType
@@ -51,6 +45,11 @@ namespace RandomFortress.Manager
                 
         }
 
+        public bool IsBgmPlaying(string key)
+        {
+            return key == currentPlayKey;
+        }
+        
         public void PlayBgm(string stringKey, float volume = 1f)
         {
             if (DataManager.Instance.stringTableDic.ContainsKey(stringKey))

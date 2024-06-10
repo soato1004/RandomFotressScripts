@@ -1,34 +1,26 @@
-﻿using RandomFortress.Common;
-using RandomFortress.Common.Utils;
-using RandomFortress.Constants;
-using RandomFortress.Menu;
-using RandomFortress.Scene;
+﻿using RandomFortress.Menu;
 using UnityEngine.SceneManagement;
 
-namespace RandomFortress.Manager
+namespace RandomFortress
 {
     /// <summary> 게임 전체에서 사용될 공통기능 매니저클래스 </summary>
     public class MainManager : Singleton<MainManager>
     {
         #region Scene 기능
 
-        public SceneName preScene = SceneName.Bootstrap;
-        public SceneName currentScene;
+        private SceneName preScene = SceneName.Bootstrap;
+        private SceneName currentScene;
+        public SceneName CurrentScene => currentScene;
         public GameType gameType = GameType.Solo;
 
 
         public Lobby Lobby;
         public PageController PageController;
-        public int GamePlayCount = 0;
+        public bool ShowPlayAd = false; // 매 게임을 진행후 광고재생
         
         public override void Reset()
         {
-            JTDebug.LogColor("MainManager Reset");
-        }
-        
-        public override void Terminate() 
-        {
-            JTDebug.LogColor("MainManager Terminate");
+            JustDebug.LogColor("MainManager Reset");
         }
 
         public void ChangeScene(SceneName name)
