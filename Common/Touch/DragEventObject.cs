@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace RandomFortress.Script.Touch
+namespace RandomFortress
 {
     [DisallowMultipleComponent]
     public class DragEventObject : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler

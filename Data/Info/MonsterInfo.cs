@@ -1,6 +1,6 @@
 
 
-namespace RandomFortress.Data
+namespace RandomFortress
 {
     [System.Serializable]
     public class MonsterInfo

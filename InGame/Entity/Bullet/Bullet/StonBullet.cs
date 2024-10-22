@@ -8,7 +8,7 @@ namespace RandomFortress
     public class StonBullet : BulletBase
     {
         [SerializeField] protected int stunDuration;
-        [FormerlySerializedAs("stunChance")] [SerializeField] protected bool isStun;
+        [SerializeField] protected bool isStun;
         [SerializeField] DebuffIndex debuffIndex = DebuffIndex.Stun;
             
         public override void Init(GamePlayer gPlayer, int index, MonsterBase monster, params object[] values)
@@ -23,10 +23,12 @@ namespace RandomFortress
         {
             if (Target == null) return;
             
-            SoundManager.Instance.PlayOneShot("bullet_hit_base");
-            SpawnManager.Instance.GetEffect(BulletData.hitEffName, transform.position);
+            SoundManager.I.PlayOneShot(SoundKey.bullet_hit_base);
+            SpawnManager.I.GetBulletEffect(BulletData.hitEffName, transform.position);
+            
             Target.Hit(Damage, textType);
             
+            // 위의 데미지로 몬스터가 죽을수도 있다.
             if (Target == null) return;
             
             // 확률적용

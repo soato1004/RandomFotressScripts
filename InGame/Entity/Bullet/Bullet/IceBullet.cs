@@ -1,9 +1,10 @@
-
-
 using UnityEngine;
 
 namespace RandomFortress
 {
+    /// <summary>
+    /// 아이스디버프. 중첩되지않고 한종류에 한번씩만 걸린다
+    /// </summary>
     public class IceBullet : BulletBase
     {
         [SerializeField] protected int buffDuration; // 슬로우 지속시간
@@ -15,6 +16,7 @@ namespace RandomFortress
             slowMove = (int)values[1];
             buffDuration = (int)values[2];
             
+            //TODO: 보스는 디버프효과를 2배 적게받음
             if (monster.monsterType == MonsterType.Boss)
             {
                 buffDuration /= 2;
@@ -30,10 +32,11 @@ namespace RandomFortress
         {
             if (Target == null) return;
             
-            SoundManager.Instance.PlayOneShot("bullet_hit_base");
-            SpawnManager.Instance.GetEffect(BulletData.hitEffName, transform.position);
+            SoundManager.I.PlayOneShot(SoundKey.bullet_hit_base);
+            SpawnManager.I.GetBulletEffect(BulletData.hitEffName, transform.position);
             Target.Hit(Damage, textType);
             
+            // 위의 데미지로 몬스터가 죽을수도 있다
             if (Target == null) return;
             
             // 동일버프가 있을경우 지우고

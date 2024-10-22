@@ -1,7 +1,4 @@
 using System.Collections;
-
-
-
 using UnityEngine;
 
 namespace RandomFortress
@@ -13,11 +10,17 @@ namespace RandomFortress
     {
         protected float Interval = 20f;
         private CircleCollider2D _collider2D;
+        protected TextType textType = TextType.Damage;
 
         protected override void Awake()
         {
             base.Awake();
             _collider2D = gameObject.GetComponent<CircleCollider2D>();
+        }
+
+        public override void Reset()
+        {
+            
         }
         
         public virtual void Init(GamePlayer gPlayer, params object[] values)
@@ -31,7 +34,7 @@ namespace RandomFortress
             while (gameObject.activeSelf)
             {
                 // 일시정지
-                if (GameManager.Instance.isPaused)
+                if (GameManager.I.isPaused)
                 {
                     yield return null;
                     continue;
@@ -44,13 +47,13 @@ namespace RandomFortress
                 {
                     MonsterBase monster = collider.GetComponent<MonsterBase>();
                     if (monster != null)
-                        Hit(monster, TextType.DamagePoison);
+                        Hit(monster);
                 }
 
                 yield return Utils.WaitForSeconds(Interval);
             }
         }
 
-        protected virtual void Hit(MonsterBase monster, TextType type = TextType.Damage) { }
+        protected virtual void Hit(MonsterBase monster) { }
     }
 }

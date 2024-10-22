@@ -1,7 +1,8 @@
 using System.Collections;
 using DG.Tweening;
-
+using Photon.Pun;
 using TMPro;
+using Unity.VectorGraphics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,21 +15,10 @@ namespace RandomFortress
     
     public class GameUIManager : Singleton<GameUIManager>
     {
-        // [Header("배경화면")] 
-        // [SerializeField] private Image changeBG;
-        // [SerializeField] private Image upBG;
-        // [SerializeField] private Image downBG;
-        
-        [Header("테스트시에만 나오는 버튼")]
-        [SerializeField] private GameObject surrender;
-        // [SerializeField] private GameObject pause;
-        
         [Header("게임내 기능 UI")] 
-        [SerializeField] private Image[] skillDim;
-        [SerializeField] private Image attackRange;
-        [SerializeField] private GameResultPopup gameResultPopup;
-        [SerializeField] private AbilityPopup abilityPopup;
-        [SerializeField] private Transform playerOutPopup;
+        [SerializeField] private Image dim; // 일반딤. 플레이어 복귀시에 사용
+        [SerializeField] private Image skillDim;
+        [SerializeField] private SVGImage attackRange; // SVGImage
         
         [Header("솔로모드 UI")]
         [SerializeField] private TextMeshProUGUI stageText;
@@ -44,7 +34,7 @@ namespace RandomFortress
         [SerializeField] private Button sellBtn;
         [SerializeField] private Button monsterInitBtn;
         [SerializeField] private Button[] upgradeBtns;
-        [SerializeField] private Button gameSpeedButton;
+        [SerializeField] private GameSpeedButton gameSpeedButton;
         
         [Header("게임에 사용되는 UI")] 
         [SerializeField] private TextMeshProUGUI timeText; // 게임 타임
@@ -72,12 +62,6 @@ namespace RandomFortress
 
             return null;
         }
-        
-        
-        public override void Reset()
-        {
-            JustDebug.LogColor("GameUIManager Reset");
-        }
 
         // 게임 최초 시작시 한번만
         public void InitializeGameUI()
@@ -85,67 +69,43 @@ namespace RandomFortress
             // 타워 업그레이드
             UpdateUpgradeBtn();
 
-            bool isSppedOn = GameManager.Instance.gameType == GameType.Solo;
-            gameSpeedButton.gameObject.SetActive(isSppedOn);
-
-            if (GameManager.Instance.gameType == GameType.Solo)
+            if (GameManager.I.gameType == GameType.Solo)
             {
-                GameManager.Instance.myPlayer.HpTrf = HpTrf;
-                GameManager.Instance.myPlayer.stageText = stageText;
+                GameManager.I.myPlayer.HpTrf = HpTrf;
+                GameManager.I.myPlayer.stageText = stageText;
             }
-
-#if UNITY_EDITOR
-            surrender.SetActive(true);
-            // pause.SetActive(true);
-#endif
         }
         
-        public void UpdateInfo()
+        // 게임 UI 변경
+        public void UpdateUI()
         {
-            GamePlayer myPlayer = GameManager.Instance.myPlayer;
-            GamePlayer otherPlayer = GameManager.Instance.otherPlayer;
+            if (GameManager.I.isPaused) return;
+            
+            GamePlayer myPlayer = GameManager.I.myPlayer;
+            GamePlayer otherPlayer = GameManager.I.otherPlayer;
             
             // 게임머니 업데이트
             goldText.text = myPlayer.gold.ToString();
             
-            // TODO: 판매기능 보류
-            // TowerBase focusTower = GameManager.Instance.focusTower;
-            // sellBtn.gameObject.SetActive(GameManager.Instance.isFocus);
-            // if (GameManager.Instance.isFocus && focusTower != null)
-            // {
-            //     Vector3 targetPos = focusTower.transform.position;
-            //     targetPos.y -= 100f;
-            //     sellBtn.transform.position = targetPos;
-            //     sellMoneyText.text = focusTower.SellPrice.ToString();
-            // }
+            // 게임속도 변경
+            gameSpeedButton.UpdateUI();
         }
         
-        private void SetPlayerHp(GamePlayer player, Transform hp)
-        {
-            // 체력 업데이트
-            for (int i = 0; i < 5; ++i)
-            {
-                hp.GetChild(i).SetActive(false);
-                if (i < player.playerHp)
-                    hp.GetChild(i).SetActive(true);
-            }
-        }
-        
+        // 업그레이드 버튼 설정 보류
         public void UpdateUpgradeBtn()
         {
-            // 업그레이드 버튼   
             for (int slotIndex = 0; slotIndex < GameConstants.TOWER_UPGRADE_COUNT; ++slotIndex)
             {
-                int towerIndex = Account.Instance.TowerDeck(slotIndex);
+                int towerIndex = Account.I.TowerDeck(slotIndex);
                 GameObject upgradeBtn = upgradeBtns[slotIndex].gameObject;
-                TowerUpgrade upgrade = GameManager.Instance.TowerUpgradeDic[towerIndex];
+                TowerUpgrade upgrade = GameManager.I.towerUpgradeDic[towerIndex];
                 
                 Image icon = upgradeBtn.transform.GetChild(0).GetComponent<Image>(); // icon, level, gold
                 TextMeshProUGUI level = upgradeBtn.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
                 TextMeshProUGUI gold = upgradeBtn.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
                 
                 // TODO: 해당 인덱스 타워의 1티어 모습만 보여줌
-                icon.sprite = ResourceManager.Instance.GetTower(towerIndex, 1);
+                icon.sprite = ResourceManager.I.GetTower(towerIndex, 1);
                 level.text = "LV."+ (upgrade.TowerUpgradeLv+1);
                 gold.text = upgrade.UpgradeCost.ToString();
 
@@ -171,35 +131,23 @@ namespace RandomFortress
                 //     break;
             }
         }
-        
-        public IEnumerator ShowAbilityUI(int loopCount = 1)
-        {
-            yield return abilityPopup.ShowAbilityCard(loopCount);
-        }
 
-        public void AbilityReady(double time)
-        {
-            StartCoroutine(abilityPopup.WaitForGameStart(time));
-        }
-
-        public void ShowResult()
-        {
-            GameManager.Instance.PauseGame();
-            gameResultPopup.ShowResult();
-        }
+        // public void ShowResult()
+        // {
+        //     GameManager.I.PauseGame();
+        //     PopupManager.I.ShowPopup(PopupNames.GameResultPopup);
+        // }
 
         public void StageStart()
         {
-            stageText.text = "Stage " + GameManager.Instance.myPlayer.stageProcess.ToString();
+            stageText.text = GameManager.I.myPlayer.stageProcess.ToString();
         }
 
         public void UpdateTime()
         {
             // 시간 업데이트
-            int minute = (int)GameManager.Instance.gameTime / 60;
-            timeText.text = minute + " : " + ((int)GameManager.Instance.gameTime % 60).ToString("D2");
-            
-            // 스킬버튼 쿨타임 업데이트
+            int minute = (int)GameManager.I.gameTime / 60;
+            timeText.text = minute + " : " + ((int)GameManager.I.gameTime % 60).ToString("D2");
         }
 
         // 몬스터 생성 업데이트
@@ -223,42 +171,35 @@ namespace RandomFortress
             Image img = coolTime.GetComponent<Image>();
             img.DOFillAmount(1, time).From(0).SetEase(Ease.Linear);
         }
-
-        public void ShowSkillDim(bool isMine = true)
+        
+        // 스킬 사용시 딤
+        public void SetSkillDim(bool show)
         {
-            if (GameManager.Instance.gameType == GameType.Solo)
+            if (show)
             {
-                // isSkillUse = true;
-                skillDim[0].DOFade(0.25f, 0.2f).SetUpdate(true);
-                skillDim[1].DOFade(1f, 0.2f).SetUpdate(true);
+                skillDim.DOFade(0.6f, 0.2f);
+                foreach (var dim in skillDim.transform.GetChildren())
+                    dim.GetComponent<Image>().DOFade(1f, 0.2f);
             }
             else
             {
-                if (isMine)
-                    GameManager.Instance.myPlayer.ShowSkillDim();
-                else
-                    GameManager.Instance.otherPlayer.ShowSkillDim();
+                skillDim.DOFade(0f, 0.2f);
+                foreach (var dim in skillDim.transform.GetChildren())
+                    dim.GetComponent<Image>().DOFade(0f, 0.2f);
             }
+        }
 
+        public void SetDim(bool show)
+        {
+            if (show)
+                dim.DOFade(0.6f, 0.15f);
+            else
+                dim.DOFade(0f, 0.15f);
+            
+            dim.gameObject.SetActive(show);
         }
         
-        public void HideSkillDim(bool isMine = true)
-        {
-            if (GameManager.Instance.gameType == GameType.Solo)
-            {
-                // isSkillUse = true;
-                skillDim[0].DOFade(0f, 0.2f).SetUpdate(true);
-                skillDim[1].DOFade(0f, 0.2f).SetUpdate(true);
-            }
-            else
-            {
-                if (isMine)
-                    GameManager.Instance.myPlayer.HideSkillDim();
-                else
-                    GameManager.Instance.otherPlayer.HideSkillDim();
-            }
-        }
-
+        // 공격 사정거리 보이기
         public void ShowAttackRange(Vector3 pos, float range)
         {
             range *= 2;
@@ -268,6 +209,7 @@ namespace RandomFortress
             attackRange.gameObject.SetActive(true);
         }
         
+        // 공격 사정거리 감추기
         public void HideAttackRange()
         {
             attackRange.gameObject.SetActive(false);
@@ -276,16 +218,10 @@ namespace RandomFortress
         // 타워 판매시 골드획득 연출
         public void ShowGoldText(Vector3 pos, int gold)
         {
-            GameObject go = SpawnManager.Instance.GetFloatingText(transform.position);
+            GameObject go = SpawnManager.I.GetFloatingText(transform.position);
             FloatingText floatingText = go.GetComponent<FloatingText>();
             floatingText.ShowGold(pos, gold);
         }
-
-        public void SetPlayerOutPopup(bool active)
-        {
-            playerOutPopup.SetActive(active);
-        }
-
 
         #region Button Event
         
@@ -295,65 +231,28 @@ namespace RandomFortress
             SkillButton skillButton = GetSkillButton(skillBtnIdex);
             skillButton.button.interactable = false;
             
-            if (GameManager.Instance.isFocus)
-                GameManager.Instance.focusTower.SetFocus(false);
+            GameManager.I.focusTower?.SetFocus(false);
          
-            SoundManager.Instance.PlayOneShot("button_click");
+            SoundManager.I.PlayOneShot(SoundKey.button_click);
             
-            ShowSkillDim();
-            
-            GamePlayer player = GameManager.Instance.myPlayer;
-            if (player.skillArr[skillBtnIdex].CanUseSkill())
-            {
-                player.skillArr[skillBtnIdex].SkillStart();
-            }
-            
-            if (GameManager.Instance.gameType != GameType.Solo)
-                GameManager.Instance.myPlayer.SkillUse(skillBtnIdex);
-        }
-
-        public void SkillUse(int index)
-        {
-            
+            GameManager.I.myPlayer.SkillUse(skillBtnIdex);
         }
         
-
         // 업그레이드 버튼
         public void OnUpgradeButtonClick(int slotIndex)
         {
-            int towerIndex = Account.Instance.TowerDeck(slotIndex);
-            GameManager.Instance.TowerUpgrade(towerIndex);
+            int towerIndex = Account.I.TowerDeck(slotIndex);
+            GameManager.I.TowerUpgrade(towerIndex);
         }
         
         // 타워 판매버튼
         public void OnSellButtonClick()
         {
-            GameManager.Instance.myPlayer.SellTower();
         }
+        
 
-        // 게임종료 버튼
-        public void OnExitButtonClick()
-        {
-            if (GameManager.Instance.gameType == GameType.Solo)
-                MainManager.Instance.ChangeScene(SceneName.Lobby);
-            else
-                PhotonManager.Instance.LeaveRoom();
-        }
 
-        // 일시정지 버튼
-        public void OnPauseButtonClick()
-        {
-            if (GameManager.Instance.TimeScale == 0)
-            {
-                HideSkillDim();
-                GameManager.Instance.ResumeGame();
-            }
-            else
-            {
-                ShowSkillDim();
-                GameManager.Instance.PauseGame();
-            }
-        }
+
 
         #endregion
     }

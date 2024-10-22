@@ -1,12 +1,15 @@
-using RandomFortress.Data;
+
 
 
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
+    /// <summary>
+    /// 배틀 에서 표시되는 현재 솔로모드 최고기록을 보여주는곳
+    /// </summary>
     public class RankBoard : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI clearTime;
@@ -16,19 +19,17 @@ namespace RandomFortress.Menu
 
         public void UpdateRankBoard()
         {
-            if (Account.Instance.Data.bestGameResult == null)
+            GameResult result = Account.I.Data.bestGameResult;
+            if (result == null)
                 return;
 
-            GameResult result = Account.Instance.Data.bestGameResult;
             clearTime.text = (result.clearTime/60).ToString("D2")+":"+(result.clearTime%60).ToString("D2");
             maxStage.text = result.maxClearStage.ToString();
+            rankName.text = LocalizationManager.I.GetLocalizedString("common_rank_" + result.rank);
             
-            //TODO: 랭크 아이콘 경로 하드코딩
             string spriteName = "Icon_GradeBadge_" + result.rank.ToString();
-            Sprite sprite = ResourceManager.Instance.GetSprite(spriteName);
-            if (sprite != null)
-                rankIcon.sprite = sprite;
-            else Debug.Log("Not Found Sprite : "+spriteName);
+            Sprite sprite = ResourceManager.I.GetSprite(spriteName);
+            rankIcon.sprite = sprite;
         }
     }
 }

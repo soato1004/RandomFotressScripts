@@ -1,5 +1,5 @@
 
-using RandomFortress.Data;
+
 
 using UnityEngine;
 
@@ -24,41 +24,17 @@ namespace RandomFortress
             burnDamage = Info.extraInfo.burnAtk;
             tickTime = Info.extraInfo.tickTime;
         }
-
-        protected override void Shooting()
-        {
-            SetState(TowerStateType.Attack);
-            
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
-            BurnBullet bullet = bulletGo.GetComponent<BurnBullet>();
-
-            DamageInfo damage = GetDamage();
-            object[] paramsArr = { damage, buffDuration, burnDamage, tickTime };
-            bullet.Init(player, Info.bulletIndex, Target, paramsArr);
-            
-            //
-            TotalDamege += damage._damage;
-            
-            if (GameManager.Instance.gameType != GameType.Solo)
-                player.Shooting(TowerPosIndex, Target.unitID, damage._damage, (int)damage._type);   
-        }
         
-        public override void ReceiveShooting(int unitID, int damage, int damageType, bool isDebuff)
+        protected override void DoShooting(MonsterBase target, DamageInfo damageInfo)
         {
-            if (!player.monsterDic.ContainsKey(unitID))
-            {
-                Debug.Log("Not Found Target!!!");
-                return;
-            }
-            MonsterBase target = player.monsterDic[unitID];
+            AddDamage(damageInfo._damage);
             
             SetState(TowerStateType.Attack);
 
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
+            GameObject bulletGo = SpawnManager.I.GetBullet(GetBulletStartPos(), Info.bulletIndex);
             BurnBullet bullet = bulletGo.GetComponent<BurnBullet>();
             
-            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
-            object[] paramsArr = { damageInfo, buffDuration, burnDamage, tickTime };
+            object[] paramsArr = { damageInfo, buffDuration, burnDamage, tickTime, this };
             bullet.Init(player, Info.bulletIndex, target, paramsArr);
         }
     }

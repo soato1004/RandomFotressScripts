@@ -1,5 +1,6 @@
 namespace RandomFortress
 {
+    // 모든 상수
     public static class GameConstants
     {
         public static readonly int TotalStages = 50;
@@ -9,12 +10,16 @@ namespace RandomFortress
         
         #region Game
 
+        
+        public static readonly int StartGold = 1000;
+        public static readonly int StartHp = 5;
+        
         public static readonly float atkRangeMul = 1.6f; // 솔로모드에서 사정거리는 더 길어져야한다
         
         public static readonly int MonsterCount = 10; // 몬스터의 최대 생성 수
         public static readonly int SpecialMonsterCount = 5; // 특수 몬스터의 최대 생성 수
-        public static readonly int AppearDelay = 100; // 몬스터 생성 간격 1초
-        public static readonly int StageClearDelay = 300; // 시작 딜레이 3초
+        public static readonly int AppearDelayMs = 1000; // 몬스터 생성 간격 1초
+        public static readonly int StageClearDelay = 3000; // 시작 딜레이 3초
         
         public static readonly int MonsterReward = 10; // 몬스터 처치시 획득 골드
         public static readonly int BossReward = 100; // 보스 처치시 획득 골드
@@ -26,6 +31,7 @@ namespace RandomFortress
         public static readonly float MaxTowerSelectionDuration = 2f;
 
         public static readonly string PrefabNameHpBar = "HpBar";
+        public static readonly string PrefabFloatingText = "FloatingText";
         public static readonly string TowerSeatImageName = "Seat_";
         
         #endregion
@@ -116,7 +122,7 @@ namespace RandomFortress
 
         #region SKill
 
-        public static readonly float SkillChoiceWaitTime = 5f; // 스킬 사용후 선택해야될때 최대 대기시간
+        public static readonly float SkillChoiceWaitTime = 10f; // 스킬 사용후 선택해야될때 최대 대기시간
 
         #endregion
 
@@ -125,11 +131,14 @@ namespace RandomFortress
 
         public static readonly int AdDebuffMinute = 30; // 광고 시청 후 디버프 유지 30분
         #endregion
+        
+        public static readonly float PlayerWaitTime = 10f;
+        
     }
 
-    public enum AdDebuffType
+    public enum PassType
     {
-        AbilityCard = 0, // 어빌리티카드 선택지
+        SuperPass = 0
     }
     
     public enum MonsterState {
@@ -207,7 +216,6 @@ namespace RandomFortress
     
     public enum SceneName
     {
-        Logo,
         Bootstrap,
         Lobby,
         Match,
@@ -226,51 +234,51 @@ namespace RandomFortress
 
     public enum GameRank
     {
-        Beginner,
-        Bronze,
-        Silver,
-        Gold,
-        Platinum,
-        Diamond,
-        Master,
-        GrandMaster,
-        Challenger
+        Beginner = 0,
+        Bronze = 1,
+        Silver = 2,
+        Gold = 3,
+        Platinum = 4,
+        Diamond = 5,
+        Master = 6,
+        GrandMaster = 7,
+        God = 8
     }
 
     public enum MonsterType
     {
         None,
         Normal,
-        Speed = 10000,
-        Tank = 20000,
-        Boss = 30000,
+        Speed = 100000,
+        Tank = 200000,
+        Boss = 300000,
     }
     
     public enum MonsterIndex
     {
-        WolfBlue = 2001,
+        WolfBlue = 20001,
         WolfGreen,
         WolfRed,
-        GoblinBerserkr = 2004,
+        GoblinBerserkr = 20004,
         GoblinMagician,
         GoblinWarrior, 
-        SkeletonArcher = 2007,
+        SkeletonArcher = 20007,
         SkeletonWarrior,
         SkeletonWizard,
-        Ogre = 2010,
+        Ogre = 20010,
         OgreBerserkr,
         OgreWarrior,
-        Golem = 2012,
+        Golem = 20012,
         GolemBlue,
         GolemIce,
-        Archer_16 = 2015,
+        Archer_16 = 20015,
         Wizard_16,
         Assassin_17
     }
 
     public enum BossIndex
     {
-        Boss1 = 3001,
+        Boss1 = 30001,
         Boss2,
         Boss3,
         Boss4,
@@ -293,9 +301,33 @@ namespace RandomFortress
 
     public enum SkillIndex
     {
-        WaterSlice = 8001,
-        ChangePlace = 7001,
-        GoodSell = 7002,
+        WaterSlice = 71001,
+        ChangePlace = 72001,
+        GoodSell = 72002,
+    }
+
+    public enum PopupNames
+    {
+        SuperPassPopup,
+        CommonPopup, // 공통으로 사용하는 원버튼 팝업
+        SteminaPopup, // 스테미너 부족시 보여주는 팝업
+        NicknamePopup, // 닉네임 설정
+        SettingPopup,
+        MailBoxPopup,
+        
+        SuperPassEffectPopup,
+        
+        GameResultPopup,
+        AbilityPopup,
+        WaitPlayerPopup,
+        
+        LoadingPopup,
+    }
+
+    // 인앱결제
+    public enum IAPNames
+    {
+        superPass        
     }
     
 }

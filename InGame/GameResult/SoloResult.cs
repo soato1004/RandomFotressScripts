@@ -1,51 +1,47 @@
 using System.Collections;
-using RandomFortress.Data;
-
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace RandomFortress
 {
-    public class SoloResult : MonoBehaviour
+    public class SoloResult : ResultBase
     {
-        [Header("Solo")]
-        [SerializeField] private GameObject SoloTitle;
-        [SerializeField] private ResultPlayer player; 
-        [SerializeField] private Transform rewardList; // enegy, buff, gold, gem, item
-        [SerializeField] private Button claimBtn;
-        // [SerializeField] private Button continueBtn;
+        [SerializeField] protected Transform title;
+        [SerializeField] protected TextMeshProUGUI titleText;
+        [SerializeField] protected ResultPlayer player; 
+        [SerializeField] protected Button claimBtn;
         
+        // TODO: 차우 리워드 추가
         public IEnumerator ResultCor()
         {
-            GamePlayer myPlayer = GameManager.Instance.myPlayer;
+            GamePlayer myPlayer = GameManager.I.myPlayer;
+            
+            // 게임결과
+            GameResult result = new GameResult(GameManager.I.IsGameClear, myPlayer.stageProcess, (int)GameManager.I.gameTime);
+            result.gameType = GameType.Solo;
+            result.towerList = myPlayer.Towers
+                .Where(t => t != null && t.Info != null)
+                .Select(t => t.Info.index)
+                .ToArray();
 
-            SoundManager.Instance.PlayOneShot("result_win");
+            // 계정에 게임결과 저장
+            _ = Account.I.SaveGameResult(result);
             
-            GameResult result = new GameResult(true, myPlayer.stageProcess, (int)GameManager.Instance.gameTime);
-            Account.Instance.SaveStageResult(result);
-            
-            // 딤
-            // yield return new WaitForSecondsRealtime(0.2f);
+            //TODO: 클리어 사운드는 다르게
+            SoundManager.I.PlayOneShot(SoundKey.result_win);
 
-            // 2. 타이틀표시
-            SoloTitle.SetActive(true);
-            // yield return new WaitForSecondsRealtime(0.05f);
+            // 타이틀표시
+            bool isWin = GameManager.I.isWin;
+            ShowTitle(isWin, title, titleText);
             
-            // 3. 게임 수치 표시
-            player.gameObject.SetActive(true);
+            // 플레이어 게임 수치 표시
+            player.SetNickname(myPlayer.Nickname);
             player.ShowResultPlayer(myPlayer.totalDmgDic, result);
-            // yield return new WaitForSecondsRealtime(0.05f);
             
-            // 4. 리워드 표시
-            // Transform goldReward = rewardList.transform.GetChild(2);
-            // goldReward.SetActive(true);
-            // TextMeshProUGUI goldText = goldReward.GetChild(2).GetComponent<TextMeshProUGUI>();
-            // goldText.text = "1000";
-            // yield return new WaitForSecondsRealtime(0.05f);
-            
-            // 6. 버튼표시
+            // 버튼
             claimBtn.gameObject.SetActive(true);
-            // continueBtn.ExSetActive(true);
 
             yield return null;
         }

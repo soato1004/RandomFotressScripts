@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-using RandomFortress.Data;
+
 
 using UnityEngine;
 
@@ -46,9 +46,16 @@ namespace RandomFortress
         
         public abstract void UseSkill(params object[] values);
         
+        /// <summary>
+        /// 스킬 쿨다운 타이머 시작
+        /// </summary>
+        /// <param name="coolTime"></param>
+        /// <returns></returns>
         protected IEnumerator WaitCoolTimeCor(float coolTime)
         {
-            if (_canUseSkill == false || !player.isLocalPlayer)
+            GameManager.I.canTowerDrag = true;
+            
+            if (_canUseSkill == false || !player.IsLocalPlayer)
                 yield break;
             
             _canUseSkill = false;
@@ -58,11 +65,11 @@ namespace RandomFortress
             float coolTimer = coolTime * (1f - (player.extraInfo.cooldownReduction / 100f));
             while (skillCoolTimer < coolTimer)
             {
-                if (GameManager.Instance.isGameOver)
+                if (GameManager.I.isGameOver)
                     yield break;
                 
                 _skillButton.coolTime.text = "" + (int)(coolTime - skillCoolTimer);
-                skillCoolTimer += Time.deltaTime * GameManager.Instance.TimeScale;
+                skillCoolTimer += Time.deltaTime * GameManager.I.gameSpeed;
                 yield return null;
             }
             
@@ -70,29 +77,25 @@ namespace RandomFortress
             _skillButton.button.interactable = true;
             _skillButton.wait.SetActive(false);
             _canUseSkill = true;
-            Debug.Log("Skill Ready!!");
+            Debug.Log("Skill Ready " + data.skillName);
         }
         
         // 5초간 입력이 없으면 스킬 사용으로 처리
-        public IEnumerator WaitSkillUseCor()
+        public IEnumerator WaitAndForceSkillUseCor()
         {
-            if (GameManager.Instance.gameType != GameType.Solo)
-                yield break;
-            
             float waitTime = 0;
             
             while (waitTime < GameConstants.SkillChoiceWaitTime)
             {
-                waitTime += Time.deltaTime * GameManager.Instance.TimeScale;
+                waitTime += Time.deltaTime * GameManager.I.gameSpeed;
                 yield return null;
             }
             
-            useSkill = false;
-            bool isMine = GameManager.Instance.myPlayer == player;
-            GameUIManager.Instance.HideSkillDim(isMine);
-            StartCoroutine(WaitCoolTimeCor(_coolTime/2));
+            Debug.Log("스킬사용 후 선택을 안함 "+data.skillName);
             
-            yield return null;
+            useSkill = false;
+            GameManager.I.SetSkillDim(false,player);
+            StartCoroutine(WaitCoolTimeCor(_coolTime/2));
         }
     }
 }

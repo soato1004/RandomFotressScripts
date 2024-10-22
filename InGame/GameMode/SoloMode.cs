@@ -15,8 +15,8 @@ namespace RandomFortress
         {
             boardUI.gameObject.SetActive(true);
             
-            GameManager.Instance.myPlayer.gameMap = gameMap[0];
-            GameManager.Instance.SetupPlayer();
+            GameManager.I.myPlayer.gameMap = gameMap[0];
+            GameManager.I.SetupPlayer();
         }
         
         public override int GetRoadWayLength() => waypoints.Length;

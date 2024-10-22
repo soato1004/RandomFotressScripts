@@ -1,12 +1,12 @@
 
-using RandomFortress.Data;
+
 
 
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
     public class SkillSlot : SlotBase
     {
@@ -22,7 +22,7 @@ namespace RandomFortress.Menu
         
         public void UpdateSlot(int slotIndex)
         {
-            int skillIndex = Account.Instance.SkillDeck(slotIndex);
+            int skillIndex = Account.I.SkillDeck(slotIndex);
             if (skillIndex == 0)
             {
                 Icon.gameObject.SetActive(false);
@@ -31,11 +31,11 @@ namespace RandomFortress.Menu
             
             Icon.gameObject.SetActive(true);
             
-            SkillData data = DataManager.Instance.skillDataDic[skillIndex];
+            SkillData data = DataManager.I.skillDataDic[skillIndex];
             
             SkillIndex = skillIndex;
-            Icon.sprite = ResourceManager.Instance.GetSprite(data.skillName);
-            Name.text = data.skillName;
+            Icon.sprite = ResourceManager.I.GetSprite(data.skillName);
+            Name.text = LocalizationManager.I.GetLocalizedString(data.index.ToString());//data.skillName;
 
             int width = slotIndex == 0 ? MAIN_WIDTH : TARGET_WIDTH;
             int height = slotIndex == 0 ? MAIN_HEIGHT : TARGET_HEIGHT;

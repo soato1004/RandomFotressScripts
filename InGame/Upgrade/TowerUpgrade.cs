@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-using RandomFortress.Data;
+
 
 
 namespace RandomFortress
@@ -20,7 +20,7 @@ namespace RandomFortress
             TowerUpgradeLv = 0;
             UpgradeCost = GameConstants.TowerCost;
 
-            TowerUpgradeData data = DataManager.Instance.towerUpgradeData;
+            TowerUpgradeData data = DataManager.I.towerUpgradeData;
             CardLvData = data.CardLvData;
             UpgradeData = data.UpgradeData;
             

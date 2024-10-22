@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RandomFortress.Data
+namespace RandomFortress
 {
     /// <summary>
     /// 원본 타워데이터를 가공하여 사용할 타워데이터

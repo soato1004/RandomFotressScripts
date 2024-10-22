@@ -1,18 +1,16 @@
-using System;
 using Photon.Pun;
 using UnityEngine;
 
 namespace RandomFortress
 {
-
     public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static T _instance;
         private static readonly object _lock = new object();
 
-        [SerializeField] private bool dontDestroyOnLoad = true; // 이제 인스턴스 변수입니다.
+        [SerializeField] private bool dontDestroyOnLoad = true;
 
-        public static T Instance
+        public static T I
         {
             get
             {
@@ -29,9 +27,6 @@ namespace RandomFortress
 
         private static void Initialize()
         {
-            if (_instance != null)
-                return;
-
             _instance = FindAnyObjectByType<T>();
 
             if (_instance == null)
@@ -41,23 +36,22 @@ namespace RandomFortress
             }
 
             Singleton<T> singletonComponent = _instance as Singleton<T>;
-            if (singletonComponent != null && singletonComponent.dontDestroyOnLoad && _instance.transform.parent == null)
+            if (singletonComponent != null && singletonComponent.dontDestroyOnLoad)
             {
                 DontDestroyOnLoad(_instance.gameObject);
+                Debug.Log("DontDestroy : "+_instance.gameObject.name);
             }
         }
-
-        public abstract void Reset();
     }
 
-    public abstract class SingletonPun<T> : MonoBehaviourPunCallbacks where T : MonoBehaviour
+    public abstract class SingletonPun<T> : MonoBehaviourPunCallbacks where T : MonoBehaviourPunCallbacks
     {
         private static T _instance;
         private static readonly object _lock = new object();
 
         [SerializeField] private bool dontDestroyOnLoad = true;
 
-        public static T Instance
+        public static T I
         {
             get
             {
@@ -74,24 +68,20 @@ namespace RandomFortress
 
         private static void Initialize()
         {
-            if (_instance != null)
-                return;
-
             _instance = FindAnyObjectByType<T>();
 
             if (_instance == null)
             {
                 GameObject singletonObject = new GameObject(typeof(T).Name, typeof(T));
-                _instance = singletonObject.GetComponent<T>();
+                _instance = singletonObject.AddComponent<T>();
             }
 
             SingletonPun<T> singletonComponent = _instance as SingletonPun<T>;
-            if (singletonComponent != null && singletonComponent.dontDestroyOnLoad && _instance.transform.parent == null)
+            if (singletonComponent != null && singletonComponent.dontDestroyOnLoad)
             {
                 DontDestroyOnLoad(_instance.gameObject);
+                Debug.Log("DontDestroy : "+_instance.gameObject.name);
             }
         }
-
-        public abstract void Reset();
     }
 }

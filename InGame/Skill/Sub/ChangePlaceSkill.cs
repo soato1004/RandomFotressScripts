@@ -1,5 +1,6 @@
 ﻿
 
+using Photon.Pun;
 using UnityEngine;
 
 namespace RandomFortress
@@ -13,8 +14,7 @@ namespace RandomFortress
 
         public override void Init(int skillIndex, GamePlayer gPlayer, SkillButton button)
         {
-            data =  DataManager.Instance.skillDataDic[skillIndex];
-            Debug.Log("Skill Create 7001 : " + data.index);
+            data =  DataManager.I.skillDataDic[skillIndex];
             _coolTime = data.coolTime;
             
             player = gPlayer;
@@ -30,13 +30,15 @@ namespace RandomFortress
         {
             useSkill = true;
             safeTower = null;
-            GameManager.Instance.canTowerDrag = false;
+            GameManager.I.canTowerDrag = false;
             
-            StartCoroutine(WaitSkillUseCor());
+            StartCoroutine(WaitAndForceSkillUseCor());
         }
         
         public override void UseSkill(params object[] values)
         {
+            Debug.Log("Use SKill "+data.skillName);
+            
             if (player.Towers == null)
                 return;
             
@@ -72,17 +74,15 @@ namespace RandomFortress
                 (Towers[a], Towers[b]) = (Towers[b], Towers[a]);
             }
             
-            StopCoroutine(WaitSkillUseCor());
+            StopCoroutine(WaitAndForceSkillUseCor());
             
             safeTower = null;
             useSkill = false;
-            GameManager.Instance.canTowerDrag = true;
-            bool isMine = GameManager.Instance.myPlayer == player;
-            GameUIManager.Instance.HideSkillDim(isMine);
+            GameManager.I.SetSkillDim(false,player);
             StartCoroutine(WaitCoolTimeCor(_coolTime));
             
-            Debug.Log("Skill Use 7001 : " + data.index);
-            player.SkillEnd(data.index, new object[]{ a, b });
+            if (player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+                player.SkillEnd(data.index, new object[]{ a, b });
         }
     }
 }

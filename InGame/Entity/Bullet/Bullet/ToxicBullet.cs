@@ -1,6 +1,4 @@
 using System.Collections;
-
-
 using UnityEngine;
 
 namespace RandomFortress
@@ -12,8 +10,10 @@ namespace RandomFortress
         
         // 독웅덩이
         [SerializeField] protected int poisonDamage; // 틱별 독 데미지 
-        [SerializeField] protected int poisonDuration; // 독 지속시간. 100 = 1초
-        [SerializeField] protected int tickTime; // 틱 시간. 100 = 1초
+        [SerializeField] protected int poisonDurationMs; // 독 지속시간
+        [SerializeField] protected int tickTimeMs; // 틱 인터벌 시간
+
+        [SerializeField] protected TowerBase attacker;
         
         // 독 디버프
         // private PoisonDebuff poisonDebuff;
@@ -27,9 +27,10 @@ namespace RandomFortress
          
             bulletImage = transform.GetChild(0).gameObject;
             
-            poisonDuration = (int)values[1];
+            poisonDurationMs = (int)values[1];
             poisonDamage = (int)values[2];
-            tickTime = (int)values[3];
+            tickTimeMs = (int)values[3];
+            attacker = (TowerBase)values[4];
             
             bulletImage.gameObject.SetActive(true);
             toxicStiky.gameObject.SetActive(false);
@@ -43,7 +44,7 @@ namespace RandomFortress
 
             CreateToxicStiky();
             
-            yield return new WaitForSeconds(poisonDuration/100f);
+            yield return new WaitForSeconds(poisonDurationMs/1000f);
             
             Remove();
         }
@@ -52,33 +53,33 @@ namespace RandomFortress
         {
             if (Target == null) return;
             
-            SoundManager.Instance.PlayOneShot("bullet_hit_base");
+            SoundManager.I.PlayOneShot(SoundKey.bullet_hit_base);
             Target.Hit(Damage, textType);
             TargetPos.y += 8f;
-            SpawnManager.Instance.GetEffect(BulletData.hitEffName, TargetPos);
+            SpawnManager.I.GetBulletEffect(BulletData.hitEffName, TargetPos);
 
         }
         
         private void CreateToxicStiky()
         {
             bulletImage.gameObject.SetActive(false);
-            toxicStiky.gameObject.SetActive(true);
             
             // 피격 지역에 독웅덩이를 생성
             GameObject go = toxicStiky.gameObject;
-            go.SetActive(true);
-                
+            
             // TODO: 모드별 크기다르게
-            if (GameManager.Instance.gameType == GameType.Solo)
+            if (GameManager.I.gameType == GameType.Solo)
             {
                 go.transform.localScale = new Vector3(1.333f, 1.333f, 1.333f);
             }
-
+            
             TargetPos.y -= 7f;
             go.transform.position = TargetPos;
+            go.SetActive(true);
             
-            object[] paramsArr = { poisonDamage, tickTime };
+            object[] paramsArr = { poisonDamage, tickTimeMs, attacker };
             toxicStiky.Init(player, paramsArr);
+            toxicStiky.gameObject.SetActive(true);
         }
     }
 }

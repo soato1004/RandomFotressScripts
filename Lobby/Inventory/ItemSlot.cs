@@ -1,12 +1,13 @@
-using RandomFortress.Data;
+
 
 
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
+    [System.Serializable]
     public class ItemSlot : SlotBase
     {
         [SerializeField] private Image Frame;
@@ -35,7 +36,7 @@ namespace RandomFortress.Menu
             
             // 아이콘
             Icon.gameObject.SetActive(true);
-            Icon.sprite = ResourceManager.Instance.GetTower(data.index, 1);
+            Icon.sprite = ResourceManager.I.GetTower(data.index, 1);
             
             
             Utils.ImageSizeToFit(TARGET_WIDTH, TARGET_HEIGHT, ref Icon);
@@ -50,8 +51,8 @@ namespace RandomFortress.Menu
             
             // 아이콘
             Icon.gameObject.SetActive(true);
-            Icon.sprite = ResourceManager.Instance.GetSprite(data.skillName);
-
+            Icon.sprite = ResourceManager.I.GetSprite(data.skillName);
+        
             Utils.ImageSizeToFit(TARGET_WIDTH, TARGET_HEIGHT, ref Icon);
         }
     }

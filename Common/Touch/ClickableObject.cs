@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace RandomFortress.Script.Touch
+namespace RandomFortress
 {
     public class ClickableObject : MonoBehaviour, IPointerClickHandler
     {

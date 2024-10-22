@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace RandomFortress.Script.Touch
+namespace RandomFortress
 {
     public class DragObject : DragEventObject
     {

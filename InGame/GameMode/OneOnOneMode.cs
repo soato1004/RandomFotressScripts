@@ -20,9 +20,9 @@ namespace RandomFortress
         {
             boardUI.gameObject.SetActive(true);
 
-            GameManager.Instance.myPlayer.gameMap = gameMap[0];
-            GameManager.Instance.otherPlayer.gameMap = gameMap[1];
-            GameManager.Instance.SetupPlayer();
+            GameManager.I.myPlayer.gameMap = gameMap[0];
+            GameManager.I.otherPlayer.gameMap = gameMap[1];
+            GameManager.I.SetupPlayer();
         }
         
         // otherPlayer 에겐 y값을 +860

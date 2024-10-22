@@ -30,16 +30,27 @@ namespace RandomFortress
         public int stikyDuration = 0;
         public int stikyAtk = 0;
         
-        
-        
+        // 합산
         public void AddExtraInfo(ExtraInfo info)
         {
             atk += info.atk;
             atkSpeed += info.atkSpeed;
             atkRange += info.atkRange;
+            criChance += info.criChance;
+            criAtk += info.criAtk;
             rewardMonster += info.rewardMonster;
             cooldownReduction += info.cooldownReduction;
             mulAtk += info.mulAtk;
+            atkRadius += info.atkRadius;
+            tickTime += info.tickTime;
+            slowDuration += info.slowDuration;
+            slowPercent += info.slowPercent;
+            stunChance += info.stunChance;
+            stunDuration += info.stunDuration;
+            burnDuration += info.burnDuration;
+            burnAtk += info.burnAtk;
+            stikyDuration += info.stikyDuration;
+            stikyAtk += info.stikyAtk;
         }
     }
 }

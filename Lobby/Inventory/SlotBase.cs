@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
     public class SlotBase : MonoBehaviour
     {

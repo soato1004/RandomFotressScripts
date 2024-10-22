@@ -1,7 +1,7 @@
 
 using UnityEngine;
 
-namespace RandomFortress.Data
+namespace RandomFortress
 {
     [CreateAssetMenu(fileName = "AbilityData", menuName = "ScriptableObjects/GameData", order = 1)]
     public class GameData : ScriptableObject

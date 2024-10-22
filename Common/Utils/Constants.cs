@@ -1,6 +1,6 @@
 ﻿namespace RandomFortress
 {
-    public static class LogColor
+    public static class Log
     {
         public const string Singleton = "#4782D2";
         

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-using RandomFortress.Data;
+
 
 using UnityEngine;
 
@@ -33,19 +33,18 @@ namespace RandomFortress
             while (gameObject.activeSelf)
             {
                 // 일시정지
-                if (GameManager.Instance.isPaused)
+                if (GameManager.I.isPaused)
                 {
                     yield return null;
                     continue;
                 }
                 
                 // 게임오버 또는 타워 제거시
-                if (IsDestroyed || GameManager.Instance.isGameOver)
+                if (IsDestroyed || GameManager.I.isGameOver)
                     break;
-
                 
                 // 공격 딜레이 대기
-                AttackWaitTimer += Time.deltaTime * GameManager.Instance.TimeScale;
+                AttackWaitTimer += Time.deltaTime * GameManager.I.gameSpeed;
                 if (AttackWaitTimer >= (100 / (float)Info.attackSpeed))
                 {
                     // 공격 시점에 사정거리 이내의 타겟 찾기
@@ -62,6 +61,10 @@ namespace RandomFortress
 
                 yield return null;
             }
+            
+            // 게임오버시 애니메이션 정지
+            if ( spineBody != null)
+                spineBody.AnimationState.TimeScale = 0;
         }
         
         //TODO: 공격시 슬로우버프 여부와 이동순서를 기반으로 공격
@@ -71,7 +74,7 @@ namespace RandomFortress
             float safeDistance = 0;
             
             // 공격 대상자 찾기
-            var array = player.monsterOrder.ToArray();
+            var array = player.monsterList.ToArray();
             for(int i=0; i<array.Length; ++i)
             {
                 MonsterBase monster = array[i];
@@ -102,40 +105,16 @@ namespace RandomFortress
                 Target = safeTarget;
             }
         }
-
-        protected override void Shooting()
-        {
-            SetState(TowerStateType.Attack);
-            
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
-            IceBullet bullet = bulletGo.GetComponent<IceBullet>();
-
-            DamageInfo damage = GetDamage();
-            object[] paramsArr = { damage, slowMove, buffDuration };
-            bullet.Init(player, Info.bulletIndex, Target, paramsArr);
-            
-            //
-            TotalDamege += damage._damage;
-            
-            if (GameManager.Instance.gameType != GameType.Solo)
-                player.Shooting(TowerPosIndex, Target.unitID, damage._damage, (int)damage._type);   
-        }
         
-        public override void ReceiveShooting(int unitID, int damage, int damageType, bool isDebuff)
+        protected override void DoShooting(MonsterBase target, DamageInfo damageInfo)
         {
-            if (!player.monsterDic.ContainsKey(unitID))
-            {
-                Debug.Log("Not Found Target!!!");
-                return;
-            }
-            MonsterBase target = player.monsterDic[unitID];
+            AddDamage(damageInfo._damage);
             
             SetState(TowerStateType.Attack);
 
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
+            GameObject bulletGo = SpawnManager.I.GetBullet(GetBulletStartPos(), info.bulletIndex);
             IceBullet bullet = bulletGo.GetComponent<IceBullet>();
             
-            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
             object[] paramsArr = { damageInfo, slowMove, buffDuration };
             bullet.Init(player, Info.bulletIndex, target, paramsArr);
         }

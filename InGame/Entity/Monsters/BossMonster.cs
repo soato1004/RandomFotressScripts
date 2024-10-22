@@ -11,15 +11,17 @@ namespace RandomFortress
         protected override void Awake()
         {
             base.Awake();
-            hpBar = SpawnManager.Instance.GetHpBar(transform.position,(int)CanvasLayer.Boss);
         }
         
-        public override void Init(GamePlayer targetPlayer, int index, int hp, int unitID, MonsterType type)
+        public override void Init(GamePlayer targetPlayer, int index, int hp, MonsterType type)
         {
             spineBody = GetComponent<SkeletonAnimation>();
             spineBody.GetComponent<MeshRenderer>().sortingOrder = (int)GameLayer.Boss;
             
-            base.Init(targetPlayer, index, hp, unitID, type);
+            base.Init(targetPlayer, index, hp, type);
+            
+            hpBar = SpawnManager.I.GetHpBar(transform.position,(int)CanvasLayer.Boss);
+            hpBar?.Init(this); // 체력바 설정
         }
         
         // Attack, Attack2, Damage taken, Death, Idle, Idle2, Run, Run2, Skill
@@ -45,7 +47,7 @@ namespace RandomFortress
         
         protected override void SetNextWay()
         {
-            targetPos = player.GetNext(wayPoint);
+            targetPos = player.GetMonsterNextTargetPoint(wayPoint);
             dir = (targetPos - transform.position).normalized;
             totalDistance = Vector3.Distance(targetPos, transform.position);
             transform.DORotate(new Vector3(0, (dir.x > 0) ? 0 : 180, 0), 0);

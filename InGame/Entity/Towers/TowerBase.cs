@@ -1,90 +1,89 @@
 using System.Collections;
 using System.Globalization;
-using System.Linq;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
-
-
-using RandomFortress.Data;
-
 using Spine;
 using Spine.Unity;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace RandomFortress
 {
     /// <summary>
-    /// 타워는 로컬객체로 생성된다. 이는 플레이 하는사람의 진영은 항상 아래쪽으로 보여지기 위함이다.
-    /// 타워에 연관된 총알, 피격이펙트, 데미지이펙트는 전부 각각의 클라이언트에서 따로 동작한다
+    /// 타워는 로컬객체로 생성된다.
+    /// 타워에 연관된 총알, 피격이펙트, 데미지이펙트는 전부 각각의 클라이언트에서 따로 관리.
+    /// 실제 데미지 적용 및 생성 파괴 시점과같은것은 타워객체의 오너가 진행
     /// </summary>
     public class TowerBase : EntityBase
     {
         [SerializeField] protected TowerInfo info;
         public TowerInfo Info => info;
 
-        [Header("공통")]
+        [Header("공통")] 
         [SerializeField] protected SkeletonAnimation spineBody;
         [SerializeField] protected SpriteRenderer select;
         [SerializeField] protected SpriteRenderer seat;
         [SerializeField] protected TextMeshPro dpsText;
         [SerializeField] protected TextMeshPro tearText;
-
-
+        [SerializeField] protected SortingGroup sortingGroup;
+        
         /// <summary> Towers 배열의 Index역할 and 현재타워위치 </summary>
         public int TowerPosIndex { get; protected set; }
-        
-        
-        protected string spriteKey = "";
-        public string GetSpriteKey => spriteKey;
 
         protected float AttackWaitTimer = 0f; // 타워 공격시 딜레이시간 타이머
         protected MonsterBase Target = null;
-        protected bool canDrag = true;
         protected Vector3 originPosition;
         protected TweenerCore<Vector3, Vector3, VectorOptions> character_ani;
         protected TowerStateType currentState = TowerStateType.Idle;
         protected float attackAniSpeed; // 공격속도 증가시 애니메이션 속도 조정
         protected const int NormalLayer = 13;
         protected const int DragLayer = 14;
-        
+
         protected int TotalDamege; // 타워가 준 총 데미지
 
-        
         // TODO: 업그레이드시 스킨 하드코딩 되어있음
-        protected int[][] skinIndex = {
-            new[]{ 0,2,3,1 },
-            new[]{ 0,3,2,1 },
-            new[]{ 0,3,2,1 },
-            new[]{ 0,1,2,3 },
-            new[]{ 0,2,3,1 },
-            new[]{ 0,2,3,1 },
-            new[]{ 0,2,3,1 },
-            new[]{ 0,2,3,1 },
+        protected int[][] skinIndex =
+        {
+            new[] { 0, 2, 3, 1 }, // 1
+            new[] { 0, 3, 2, 1 }, // 2
+            new[] { 0, 3, 2, 1 }, // 3
+            new[] { 0, 1, 2, 3 }, // 4
+            new[] { 0, 2, 3, 1 }, // 5
+            new[] { 0, 2, 3, 1 }, // 6
+            new[] { 0, 2, 3, 1 }, // 7
+            new[] { 0, 2, 3, 1 }, // 8
         };
         
+        private Vector3 oriScale; // 티어별 타워크기
+        private float[] multiScale = { 0.7f, 1f, 1.05f, 1.1f, 1.15f };
+        
+        private const float MaxAttackSpeedMultiplier = 100f;
+
         protected override void Awake()
         {
             base.Awake();
+            sortingGroup = GetComponent<SortingGroup>();
         }
-        
+
         public virtual void Init(GamePlayer targetPlayer, int posIndex, int towerIndex, int tier)
         {
             // 초기설정
             player = targetPlayer;
             TowerPosIndex = posIndex;
-            SetInfo(DataManager.Instance.GetTowerData(towerIndex), tier);
-            
+            SetInfo(DataManager.I.GetTowerData(towerIndex), tier);
+            sortingGroup.sortingOrder = NormalLayer;
+
             // 타워 내부정보 리셋
             Reset();
 
             // 타워는 로컬플레이어만 업데이트를 처리한다.
-            if (player.isLocalPlayer)
+            if (player.IsLocalPlayer)
                 StartCoroutine(TowerUpdate());
         }
-        
-        protected virtual void Reset()
+
+        public override void Reset()
         {
             gameObject.SetActive(true);
             gameObject.name = info.towerName + " " + info.tier;
@@ -94,12 +93,12 @@ namespace RandomFortress
             Target = null;
             originPosition = spineBody.transform.localPosition;
             TotalDamege = 0;
+            _canInput = true;
             
             // TODO: 공격속도가 변할때마다 이코드가 필요하다
-            float duration =  SpineUtils.GetAnimationDuration(spineBody, "Attack");
-            attackAniSpeed = ((float)info.attackSpeed/100) * duration;
+            float duration = SpineUtils.GetAnimationDuration(spineBody, "Attack");
+            attackAniSpeed = ((float)info.attackSpeed / 100) * duration;
             
-            // ratio = body.transform.localScale.x;
             // 타워 초기화
             SetBody();
             SetFocus(false);
@@ -109,53 +108,40 @@ namespace RandomFortress
         protected virtual void SetInfo(TowerData data, int tier = 1)
         {
             if (info == null)
-            {
                 info = new TowerInfo(data.towerInfoDic[tier]);
-            }
             else
-            {
                 info.UpgradeTower(data.towerInfoDic[tier]);
-            }
-            
+
             // 높은 티어의 타워일경우
             if (tier > 1)
             {
-                JustDebug.Log("index "+info.index+" tier "+info.tier);
-                
-                string skinNmae = "S0" + skinIndex[info.index-1][info.tier-2];
+                string skinNmae = "S0" + skinIndex[info.index - 1][info.tier - 2];
                 spineBody.skeleton.SetSkin(skinNmae);
                 spineBody.skeleton.SetSlotsToSetupPose();
-            
+
                 tearText.text = "Tear " + info.tier;
             }
 
-            if (GameManager.Instance.gameType == GameType.Solo)
+            if (GameManager.I.gameType == GameType.Solo)
                 info.attackRange = (int)(info.attackRange * GameConstants.atkRangeMul);
         }
-
-        // TODO: 티어별 타워크기 변경
-        private Vector3 oriScale;
-        // private float[] soloScale = { 1f, 1.3f, 1.35f, 1.4f, 1.45f,};
-        private float[] multiScale = { 0.7f, 1f, 1.05f, 1.1f, 1.15f};
         
         protected virtual void SetBody()
         {
             // 솔로모드 
-            if (GameManager.Instance.gameType == GameType.Solo)
-            {
+            if (GameManager.I.gameType == GameType.Solo)
                 transform.localScale = new Vector3(1.333f, 1.333f, 1.333f);
-            }
-            
+
             spineBody.transform.localScale = spineBody.transform.localScale * multiScale[info.tier - 1];
-            
+
             // 티어1일때는
-            seat.sprite = ResourceManager.Instance.GetSprite(GameConstants.TowerSeatImageName + info.tier);
+            seat.sprite = ResourceManager.I.GetSprite(GameConstants.TowerSeatImageName + info.tier);
         }
-        
+
         public void SetState(TowerStateType state = TowerStateType.Idle)
         {
             currentState = state;
-            
+
             if (spineBody != null)
             {
                 switch (state)
@@ -164,20 +150,21 @@ namespace RandomFortress
                         spineBody.AnimationState.TimeScale = 1f;
                         spineBody.AnimationState.SetAnimation(0, "Idle", true);
                         break;
-                
+
                     case TowerStateType.Attack:
                         TrackEntry attackEntry = spineBody.AnimationState.SetAnimation(0, "Attack", false);
                         attackEntry.TimeScale = attackAniSpeed < 1 ? 1 : attackAniSpeed;
                         TrackEntry idleEntry = spineBody.AnimationState.AddAnimation(0, "Idle", true, 0);
                         idleEntry.TimeScale = 1f;
                         break;
-                
+
                     case TowerStateType.Sell:
                         break;
-                
+
                     case TowerStateType.Upgrade:
                         break;
                 }
+
                 return;
             }
         }
@@ -186,20 +173,20 @@ namespace RandomFortress
         {
             player.AddTotalDamage(info.index, TotalDamege, info.tier);
         }
-        
+
         protected virtual IEnumerator TowerUpdate()
         {
             while (gameObject.activeSelf)
             {
                 // 일시정지
-                if (GameManager.Instance.isPaused)
+                if (GameManager.I.isPaused)
                 {
                     yield return null;
                     continue;
                 }
-                
+
                 // 게임오버 또는 타워 제거시
-                if (IsDestroyed || GameManager.Instance.isGameOver)
+                if (IsDestroyed || GameManager.I.isGameOver)
                     break;
 
                 // 현재 공격 대상이 없다면
@@ -216,18 +203,22 @@ namespace RandomFortress
 
                 yield return null;
             }
+
+            // 게임오버시 애니메이션 정지
+            if ( spineBody != null)
+                spineBody.AnimationState.TimeScale = 0;
         }
-        
+
         protected virtual void SearchMonstersInAttackRange()
         {
             // 공격 대상자 찾기
-            var array = player.monsterOrder.ToArray();
-            for(int i=0; i<array.Length; ++i)
+            var array = player.monsterList.ToArray();
+            for (int i = 0; i < array.Length; ++i)
             {
                 MonsterBase monster = array[i];
                 if (monster == null || monster.gameObject.activeSelf == false)
                     continue;
-                    
+
                 float distance = Vector3.Distance(transform.position, monster.transform.position);
                 if (distance <= info.attackRange)
                 {
@@ -236,9 +227,7 @@ namespace RandomFortress
                 }
             }
         }
-
-        private const float MaxAttackSpeedMultiplier = 100f;
-
+        
         protected virtual void UpdateAttackTargetAndShooting()
         {
             UpdateAttackTimer();
@@ -247,7 +236,7 @@ namespace RandomFortress
             {
                 if (IsTargetInRangeAndActive())
                 {
-                    ResetAttackTimer();
+                    AttackWaitTimer = 0;
                     Shooting();
                 }
                 else
@@ -259,7 +248,7 @@ namespace RandomFortress
 
         void UpdateAttackTimer()
         {
-            float timeScaleAdjustedDeltaTime = Time.deltaTime * GameManager.Instance.TimeScale;
+            float timeScaleAdjustedDeltaTime = Time.deltaTime * GameManager.I.gameSpeed;
             AttackWaitTimer += timeScaleAdjustedDeltaTime;
         }
 
@@ -275,46 +264,35 @@ namespace RandomFortress
         {
             if (Target == null || !Target.gameObject.activeSelf)
                 return false;
-    
+
             float distance = Vector3.Distance(transform.position, Target.transform.position);
             return distance <= info.attackRange;
         }
 
-        void ResetAttackTimer()
-        {
-            AttackWaitTimer = 0;
-        }
-    
-
         protected void ShowDps()
         {
-            // dps 표시
             dpsText.text = TotalDamege.ToString(CultureInfo.CurrentCulture);
         }
-        
-        
-        
+
         // 타워 업그레이드와 카드레벨과 디버프를 계산하여 데미지를 준다
         protected DamageInfo GetDamage()
         {
             TextType type = TextType.Damage;
             float damage = info.attackPower;
-            
+
             // 타워 데미지 계산
-            float upgradeDmg = GameManager.Instance.TowerUpgradeDic[info.index].GetDamage();
+            float upgradeDmg = GameManager.I.towerUpgradeDic[info.index].GetDamage();
             float abilityDmg = (100f + player.extraInfo.atk) / 100;
             damage *= upgradeDmg * abilityDmg;
 
-            damage *= GameManager.Instance.CheatDamage;
-            
             // 크리티컬시
             float totalDamage = damage;
-            for(int i=0; i<player.abilityList.Count; ++i)
+            for (int i = 0; i < player.abilityList.Count; ++i)
             {
                 ExtraInfo extraInfo = player.abilityList[i];
                 if (extraInfo.criChance > 0)
                 {
-                    int criChance = extraInfo.criChance ;
+                    int criChance = extraInfo.criChance;
                     bool isCri = Random.Range(0, 100) < criChance;
                     if (isCri)
                     {
@@ -323,6 +301,10 @@ namespace RandomFortress
                     }
                 }
             }
+            
+#if UNITY_EDITOR
+            totalDamage *= GameManager.I.CheatDamage;
+#endif
 
             return new DamageInfo((int)totalDamage, type);
         }
@@ -341,206 +323,162 @@ namespace RandomFortress
             return transform.position;
         }
         
+        public void AddDamage(int damage) => TotalDamege += damage;
+
         protected virtual void Shooting()
         {
-            SetState(TowerStateType.Attack);
-
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), info.bulletIndex);
-            BulletBase bullet = bulletGo.GetComponent<BulletBase>();
-
             DamageInfo damage = GetDamage();
-            bullet.Init(player, info.bulletIndex, Target, damage);
-            
-            //
-            TotalDamege += damage._damage;
-
-            // 총탄발사 동기화
-            if (GameManager.Instance.gameType != GameType.Solo)
-                player.Shooting(TowerPosIndex, Target.unitID, damage._damage, (int)damage._type);   
+            DoShooting(Target, damage);
+            player.Shooting(TowerPosIndex, Target._unitID, damage._damage, (int)damage._type);
         }
         
         public virtual void ReceiveShooting(int unitID, int damage, int damageType, bool isDebuff)
         {
-            if (!player.monsterDic.ContainsKey(unitID))
-            {
-                Debug.Log("Not Found Target!!!");
-                return;
-            }
-            MonsterBase target = player.monsterDic[unitID];
+            MonsterBase target = player.entityDic[unitID] as MonsterBase;
+            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
+            DoShooting(target, damageInfo);
+        }
+
+        protected virtual void DoShooting(MonsterBase target, DamageInfo damageInfo)
+        {
+            AddDamage(damageInfo._damage);
             
             SetState(TowerStateType.Attack);
 
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), info.bulletIndex);
+            GameObject bulletGo = SpawnManager.I.GetBullet(GetBulletStartPos(), info.bulletIndex);
             BulletBase bullet = bulletGo.GetComponent<BulletBase>();
-            
-            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
             
             bullet.Init(player, info.bulletIndex, target, damageInfo);
         }
-
-        public bool UpgradePossible(int index, int tier)
-        {
-            return (this.info.index == index) && (this.info.tier == tier);
-        }
-        
-        // 같은 종류의 타워로 업그레이드
-        public virtual void UpgradeTower(int tier)
-        {
-            TowerData data = DataManager.Instance.GetTowerData(info.index);
-            // int tier = _info.tier + 1;
-            SetInfo(data, tier);
-            
-            JustDebug.Log("index "+info.index+" tier "+info.tier);
-            string skinNmae = "S0" + skinIndex[info.index-1][info.tier-2];
-            spineBody.skeleton.SetSkin(skinNmae);
-            spineBody.skeleton.SetSlotsToSetupPose();
-            
-            tearText.text = "Tear " + info.tier;
-            
-            // 타워 초기화
-            Reset();
-        }
         
         #region Input
+        
+        private const float ClickThreshold = 0.2f; // 클릭인지 아닌지 체크시간
+        
+        private Vector3 _offSet;
+        private bool _canInput = true;
+        private float _dragTime = 0f;
 
-        protected Vector3 offSet;
-        protected bool isDragging = false;
-        private float mouseButtonDownTime = 0f;
-
-        protected void OnMouseDown()
+        private bool CanInput()
         {
-            if (player != GameManager.Instance.myPlayer)
-                return;
-            
-            mouseButtonDownTime = 0;
-            isDragging = true;
-            
-            offSet = spineBody.transform.position - Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            spineBody.GetComponent<MeshRenderer>().sortingOrder = DragLayer; // 드래그할때에만 오더증가
-        }
-
-        protected void OnMouseDrag()
-        {
-            if (player != GameManager.Instance.myPlayer)
-                return;
-            
-            if (!canDrag)
-                return;
-
-            if (!GameManager.Instance.canTowerDrag)
-                return;
-            
-            mouseButtonDownTime += Time.deltaTime;
-
-            spineBody.transform.position = Camera.main.ScreenToWorldPoint(Input.mousePosition) + offSet;
+            return player == GameManager.I.myPlayer && _canInput && !PopupManager.I.isOpenPopup;
         }
         
-        protected void OnMouseUp()
+        public void MouseDown()
         {
-            if (player != GameManager.Instance.myPlayer)
-                return;
+            if (!CanInput()) return;
+            
+            _dragTime = 0f;
+            
+            _offSet = spineBody.transform.position - Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            sortingGroup.sortingOrder = DragLayer; // 드래그할때에만 오더증가
+        }
+        
+        public void MouseDrag()
+        {
+            if (!CanInput()) return;
 
-            isDragging = false;
+            if (!GameManager.I.canTowerDrag) return; // 드래그만 막는다
+            
+            _dragTime += Time.deltaTime;
+            spineBody.transform.position = Camera.main.ScreenToWorldPoint(Input.mousePosition) + _offSet;
+        }
+        
+        public void MouseUp()
+        {
+            if (!CanInput()) return;
             
             // 클릭으로 간주
-            if (mouseButtonDownTime < 0.2f)
+            if (_dragTime < ClickThreshold)
             {
-                SoundManager.Instance.PlayOneShot("tower_select");
+                SoundManager.I.PlayOneShot(SoundKey.tower_select);
                 SetFocus();
                 ReturnToOriPos(0);
-                
                 player.CheckUserAvailableSkill(BaseSkill.SkillAction.Touch_Tower, this);
             }
             // 드래그로 간주
             else
             {
-                isDragging = false;
-                spineBody.GetComponent<MeshRenderer>().sortingOrder = NormalLayer; // 드래그할때에만 오더증가 삭제
-
-                TowerBase target = DragAndDropTower(); 
-                if (target != null)
+                sortingGroup.sortingOrder = NormalLayer; // 드래그할때에만 오더증가 삭제
+        
+                TowerBase target = DragAndDropTower(); // 합체 대상이 되는 타워를 찾는다.
+                if (target != null && CanUpgrade(target))
                 {
-                    // // TODO: 자리바꾸기 스킬 사용시에만 처리로 코드변경
-                    // isSkillUsed = player.CheckUserAvailableSkill(BaseSkill.SkillAction.Drag_Tower, new object[]{this, target});
-                    // if (isSkillUsed)
-                    // {
-                    //     return;
-                    // }
-                    
-                    if (target.info.tier < 6  &&target.UpgradePossible(info.index, info.tier))
-                    {
-                        int tier = info.tier + 1;
-                        // 포커스 해제
-                        SetFocus(false);
-                        
-                        // 현재 드래그한 타워 삭제
-                        player.TowerDestroy(TowerPosIndex);
-                        
-                        // 드래그 대상 타워 삭제
-                        player.TowerDestroy(target.TowerPosIndex);
-                        
-                        // 드래그 대상 위치에 랜덤타워 건설
-                        player.BuildRandomTower(tier, target.TowerPosIndex);
-                        
-                        // 드랍한 대상 타워자리에 업그레이드
-                        // player.UpgradeTower(target.TowerPosIndex);
-                        return;
-                    }
-                }
-
-                ReturnToOriPos();
-            }
-        }
-
-        private TowerBase DragAndDropTower()
-        {
-            // 드래그로 타워에 놓을경우, 같은 티어&종류 타워라면 업그레이드
-            Vector2 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition); // 터치한 좌표 가져옴
-            Ray2D ray = new Ray2D(wp, Vector2.zero); // 원점에서 터치한 좌표 방향으로 Ray를 쏨
-            RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
-            foreach (var hit in hits)
-            {
-                if (hit && hit.collider.gameObject != gameObject)
-                {
-                    TowerBase target = hit.collider.gameObject.GetComponent<TowerBase>();
-                    // 같은 티어 & 종류 타워라면 업그레이드
-                    if (target != null)
-                    {
-                        return target;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public void ReturnToOriPos(float duration = 0.5f)
-        {
-            canDrag = false;
-            spineBody.transform.DOLocalMove(originPosition, duration).OnComplete(() =>
-            {
-                canDrag = true;
-            });
-        }
-
-        protected void SetFocus()
-        {
-            if (GameManager.Instance.isFocus)
-            {   // 자기자신을 클릭시 해제
-                if (GameManager.Instance.focusTower == this) 
+                    // 타워 업그레이드
                     SetFocus(false);
-                else 
-                { // 다른 포커스에서 자신으로 올경우
-                    GameManager.Instance.focusTower.SetFocus(false);
-                    SetFocus(true);
+                    player.TowerDestroy(TowerPosIndex);
+                    player.TowerDestroy(target.TowerPosIndex);
+                    player.BuildRandomTower(info.tier + 1, target.TowerPosIndex);
                 }
+                else
+                    ReturnToOriPos();
             }
-            else // 클릭
-                SetFocus(true);
-            
-            GameUIManager.Instance.UpdateInfo();
         }
         
+        public bool UpgradePossible(int index, int tier) => (info.index == index) && (info.tier == tier);
+        
+        private bool CanUpgrade(TowerBase target) => target.info.tier < 5 && target.UpgradePossible(info.index, info.tier);
+        
+        // 타워를 합체
+        private TowerBase DragAndDropTower()
+        {
+            // 현재 마우스 포인터의 월드 좌표 가져오기
+            Vector2 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+            // 마우스 포인터 위치에서 아래로 Raycast 시도
+            RaycastHit2D[] hits = Physics2D.RaycastAll(wp, Vector2.zero);
+
+            foreach (var hit in hits)
+            {
+                if (hit.collider != null && hit.collider.gameObject != gameObject)
+                {
+                    // TowerBase 컴포넌트 캐싱
+                    TowerBase target = hit.collider.GetComponent<TowerBase>();
+                    if (target != null)
+                    {
+                        return target; // 타워가 감지되면 바로 반환
+                    }
+                }
+            }
+
+            return null; // 타워가 감지되지 않으면 null 반환
+        }
+        
+        // 원래 위치로
+        private void ReturnToOriPos(float duration = 0.5f)
+        {
+            _canInput = false;
+            spineBody.transform.DOLocalMove(originPosition, duration).OnComplete(() => { _canInput = true; });
+        }
+
+        // 타워의 포커스를 설정 또는 해제한다
+        private void SetFocus()
+        {
+            TowerBase focusTower = GameManager.I.focusTower;
+            
+            if (focusTower == this)
+            {
+                // 자기자신을 클릭시 해제
+                SetFocus(false);
+            }
+            else
+            {
+                if (focusTower != null)
+                {
+                    // 다른 포커스에서 자신으로 올경우
+                    focusTower.SetFocus(false); // 해당타워 포커스 해제
+                    SetFocus(true); // 현재타워 포커스
+                }
+                else
+                {
+                    // 선택한 타워가 없다면
+                    bool isForcus = select.gameObject.activeSelf;
+                    SetFocus(!isForcus);
+                }
+            }
+        }
+
+        // 타워 포커스를 설정. 외부에서 조작시엔 게임매니저 호출을 하지않는다.
         public void SetFocus(bool active, bool callManager = true)
         {
             select.gameObject.SetActive(active);
@@ -548,12 +486,13 @@ namespace RandomFortress
             if (callManager)
             {
                 if (active)
-                    GameManager.Instance.ShowForcusTower(this);
+                    GameManager.I.ShowFocusTower(this);
                 else
-                    GameManager.Instance.HideForcusTower();
+                    GameManager.I.HideFocusTower();
             }
         }
 
+        // 타워 스왑
         public void Swap(TowerBase other)
         {
             // 위치값 변경
@@ -567,27 +506,21 @@ namespace RandomFortress
             // 바디값 초기화
             ReturnToOriPos(0);
             other.ReturnToOriPos(0);
-            
+
             SetFocus(false);
             other.SetFocus(false);
         }
-        
-        public void OnStageClear()
-        {
-        }
-        
+
         #endregion
 
         public void TowerDestroy()
         {
             Remove();
         }
-        
+
         protected override void Remove()
         {
-            if (IsDestroyed)
-                return;
-
+            if (IsDestroyed) return;
             IsDestroyed = true;
 
             player.AddTotalDamage(info.index, TotalDamege, info.tier);

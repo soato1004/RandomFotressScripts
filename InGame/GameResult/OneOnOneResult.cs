@@ -1,60 +1,56 @@
 using System.Collections;
-using RandomFortress.Data;
-
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace RandomFortress
 {
-    public class OneOnOneResult : MonoBehaviour
+    public class OneOnOneResult : ResultBase
     {
-        [SerializeField] private ResultPlayer other;
-        [SerializeField] private ResultPlayer player; 
-        [SerializeField] private Transform rewardList; // enegy, buff, gold, gem, item
-        [SerializeField] private GameObject WinTitle;
-        [SerializeField] private GameObject DefeatTitle;
-        [SerializeField] private Button claimBtn;
+        [SerializeField] protected Transform title;
+        [SerializeField] protected TextMeshProUGUI titleText;
+        [SerializeField] protected ResultPlayer other;
+        [SerializeField] protected ResultPlayer player; 
+        [SerializeField] protected Button claimBtn;
         
+        //TODO: 리워드 추가
         public IEnumerator ResultCor()
         {
-            GamePlayer myPlayer = GameManager.Instance.myPlayer;
-            GamePlayer otherPlayer = GameManager.Instance.otherPlayer;
-            bool isWin = GameManager.Instance.isWin;
-            
-            if (isWin) 
-                SoundManager.Instance.PlayOneShot("result_win");
-            else
-                SoundManager.Instance.PlayOneShot("result_lose");
-            
-            
-            GameResult myResult = new GameResult(isWin, myPlayer.stageProcess, (int)GameManager.Instance.gameTime);
-            Account.Instance.SaveStageResult(myResult);
-            
-            // yield return new WaitForSecondsRealtime(0.2f);
+            GamePlayer myPlayer = GameManager.I.myPlayer;
+            GamePlayer otherPlayer = GameManager.I.otherPlayer;
 
-            // 2. 타이틀표시
-            WinTitle.SetActive(isWin);
-            DefeatTitle.SetActive(!isWin);
-            // yield return new WaitForSecondsRealtime(0.05f);
+            bool isWin = GameManager.I.isWin;
             
-            // 3. 게임 수치 표시
-            other.gameObject.SetActive(true);
-            player.gameObject.SetActive(true);
+            // 게임결과 반영
+            GameResult result = new GameResult(isWin, myPlayer.stageProcess, (int)GameManager.I.gameTime);
+            result.gameType = GameType.OneOnOne;
+            result.towerList = myPlayer.Towers
+                .Where(t => t != null && t.Info != null)
+                .Select(t => t.Info.index)
+                .ToArray();
+            result.roomName = GameManager.I.RoomName;
+            result.otherUserid = otherPlayer.Userid;
+            result.otherTowerList = otherPlayer.Towers
+                .Where(t => t != null && t.Info != null)
+                .Select(t => t.Info.index)
+                .ToArray();
             
-            GameResult otherResult = new GameResult(isWin, otherPlayer.stageProcess, (int)GameManager.Instance.gameTime);
+            Debug.Log("상대방 UserID: "+otherPlayer.Userid);
+            
+            _ = Account.I.SaveGameResult(result);
+            
+            // 타이틀 표시 및 게임결과별 사운드
+            ShowTitle(isWin, title, titleText);
+            
+            // 게임 수치 표시
+            other.SetNickname(otherPlayer.Nickname);
+            player.SetNickname(myPlayer.Nickname);
             
             other.ShowTowerList(otherPlayer.totalDmgDic);
-            player.ShowResultPlayer(myPlayer.totalDmgDic, myResult);
-            // yield return new WaitForSecondsRealtime(0.05f);
+            player.ShowResultPlayer(myPlayer.totalDmgDic, result);
             
-            // 4. 리워드 표시
-            // Transform goldReward = rewardList.transform.GetChild(2);
-            // goldReward.SetActive(true);
-            // TextMeshProUGUI goldText = goldReward.GetChild(2).GetComponent<TextMeshProUGUI>();
-            // goldText.text = "1000";
-            // yield return new WaitForSecondsRealtime(0.05f);
-            
-            // 6. 버튼표시
+            // 버튼표시
             claimBtn.gameObject.SetActive(true);
             yield return null;
         }

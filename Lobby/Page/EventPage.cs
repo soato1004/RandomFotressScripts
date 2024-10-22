@@ -1,4 +1,4 @@
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
     public class EventPage : BasePage
     {

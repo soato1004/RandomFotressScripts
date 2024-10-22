@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace RandomFortress.Data
+namespace RandomFortress
 {
     /// <summary>
     /// 타워 업그레이드 수치 저장

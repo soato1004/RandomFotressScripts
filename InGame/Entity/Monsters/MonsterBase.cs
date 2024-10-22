@@ -1,8 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
-
-using RandomFortress.Data;
 
 using Spine.Unity;
 using UnityEngine;
@@ -10,8 +9,7 @@ using UnityEngine;
 namespace RandomFortress
 {
     /// <summary>
-    /// 몬스터는 네트웍 객체로 생성된다. 하나가 생성되면, 플레이어와 상대플레이어 두곳에 생성되므로
-    /// 죽였을때의 보상만 한곳에서 처리하고, 나머지는 각각의 클라이언트에서 동일하게 연출
+    /// 몬스터는 로컬객체로 생성된다. 플레이어와 상대플레이어에서 각각 생성된다
     /// </summary>
     public class MonsterBase : EntityBase
     {
@@ -39,43 +37,40 @@ namespace RandomFortress
         
         public MonsterType monsterType = MonsterType.None;
         
-        public int unitID { get; private set; } // 플레이어의 몬스터리스트에서 해당몬스터의 인덱스
         public bool UseSpine() => spineBody != null;
         
-
-        public virtual void Init(GamePlayer targetPlayer, int index, int hp, int unitID, MonsterType type)
+        public override void Reset()
         {
-            gameObject.SetActive(true);
-            player = targetPlayer;
-
-            monsterType = type;
-
-            this.unitID = unitID;
-
-            SetMonsterScale(monsterType); // 몬스터 크기 설정
-            SetInfo(DataManager.Instance.monsterStateDic[index]); // 몬스터 초기 정보 설정
-            currentHp = hp;
-            
-            hpBar.Init(this); // 체력바 설정
-
-            AdjustMonsterPropertiesByType(monsterType); // 몬스터 유형에 따른 속성 조정
-
             IsDestroyed = false;
             wayPoint = 0;
+            
+            gameObject.SetActive(true);
+        }
+        
+        public virtual void Init(GamePlayer targetPlayer, int index, int hp, MonsterType type)
+        {
+            Reset();
+
+            player = targetPlayer;
+            currentHp = hp;
+            monsterType = type;
+
+            SetMonsterScale(monsterType); // 몬스터 크기 설정
+            SetInfo(DataManager.I.monsterDataDic[index]); // 몬스터 초기 정보 설정
+            AdjustMonsterPropertiesByType(monsterType); // 몬스터 유형에 따른 속성 조정
             SetNextWay();
             SetState(MonsterState.walk);
             
             StartCoroutine(MonsterUpdate());
         }
-
-
+        
         // 게임 모드 및 속성에 따른 몬스터 크기설정
         private void SetMonsterScale(MonsterType monsterType)
         {
-            float baseScale = GameManager.Instance.gameType == GameType.Solo ? 45 : 30;
+            float baseScale = GameManager.I.gameType == GameType.Solo ? 45 : 30;
             if (spineBody)
             {
-                baseScale = GameManager.Instance.gameType == GameType.Solo ? 21 : 14;
+                baseScale = GameManager.I.gameType == GameType.Solo ? 21 : 14;
             }
 
             // 몬스터 유형별 추가 조정
@@ -89,7 +84,7 @@ namespace RandomFortress
                     scaleModifier = 1.15f;
                     break;
                 case MonsterType.Boss:
-                    baseScale = GameManager.Instance.gameType == GameType.Solo ? 25 : 18;
+                    baseScale = GameManager.I.gameType == GameType.Solo ? 25 : 18;
                     scaleModifier = 0; // 보스는 개별적인 스케일 조정을 하지 않음
                     break;
             }
@@ -104,7 +99,7 @@ namespace RandomFortress
         // 유닛의 크기 정의
         private void AdjustMonsterPropertiesByType(MonsterType monsterType)
         {
-            if (GameManager.Instance.gameType != GameType.Solo)
+            if (GameManager.I.gameType != GameType.Solo)
                 info.moveSpeed -= 50;
             
             switch (monsterType)
@@ -140,17 +135,14 @@ namespace RandomFortress
 
         private IEnumerator MonsterUpdate()
         {
-            // 조정된 게임크기에 맞게 이동속도도 보간해야한다
-            float mainScale = GameManager.Instance.mainScale;
-            
             while (gameObject.activeSelf)
             {
                 // 죽거나 게임종료시 빠져나감
-                if (monsterState == MonsterState.die || GameManager.Instance.isGameOver )
+                if (monsterState == MonsterState.die || GameManager.I.isGameOver )
                     break;
                 
                 // 일시정지
-                if (GameManager.Instance.isPaused)
+                if (GameManager.I.isPaused)
                 {
                     yield return null;
                     continue;
@@ -162,7 +154,7 @@ namespace RandomFortress
                     _debuffList[i].UpdateDebuff();
 
                 // 이동처리
-                float moveFactor = info.moveSpeed * moveDebuff * Time.deltaTime * GameManager.Instance.TimeScale * mainScale;
+                float moveFactor = info.moveSpeed * moveDebuff * Time.deltaTime * GameManager.I.gameSpeed;
                 transform.position += moveFactor * dir;
                 
                 // 목표지점 도착시
@@ -174,7 +166,7 @@ namespace RandomFortress
                     wayPoint++;
                     
                     // 목표지까지 도달시 데미지
-                    if (wayPoint >= GameManager.Instance.GetWayLength)
+                    if (wayPoint >= GameManager.I.GetWayLength)
                     {
                         int damage = info.monsterType == MonsterType.Boss ? GameConstants.BossDamage : GameConstants.MonsterDamage;
                         player.DamageToPlayer(damage);
@@ -187,11 +179,17 @@ namespace RandomFortress
 
                 yield return null;
             }
+            
+            // 게임오버시 애니메이션 정지
+            if (spineBody != null)
+                spineBody.timeScale = 0;
+            if (anim != null)
+                anim.speed = 0;
         }
         
         protected virtual void SetNextWay()
         {
-            targetPos = player.GetNext(wayPoint);
+            targetPos = player.GetMonsterNextTargetPoint(wayPoint);
             dir = (targetPos - transform.position).normalized;
             totalDistance = Vector3.Distance(targetPos, transform.position);
             transform.DORotate(new Vector3(0, (dir.x > 0) ? 180 : 0, 0), 0);
@@ -206,7 +204,7 @@ namespace RandomFortress
             
             CreateDamageText(damage, type);
 
-            hpBar.OnSetText(currentHp);
+            hpBar?.OnSetText(currentHp);
 
             if (currentHp <= 0)
             {
@@ -216,14 +214,14 @@ namespace RandomFortress
         
         private void CreateDamageText(int damage, TextType type = TextType.Damage)
         {
-            GameObject go = SpawnManager.Instance.GetFloatingText(transform.position);
+            GameObject go = SpawnManager.I.GetFloatingText(transform.position);
             FloatingText floatingText = go.GetComponent<FloatingText>();
             floatingText.Show(transform.position, damage, type);
         }
         
         protected override void Remove()
         {
-            if (!player.isLocalPlayer)
+            if (!player.IsLocalPlayer)
                 return;
                 
             if (IsDestroyed)
@@ -234,8 +232,8 @@ namespace RandomFortress
             int reward = info.monsterType == MonsterType.Boss ? GameConstants.BossReward : GameConstants.MonsterReward;
             player.KillMonster(reward);
             
-            if (GameManager.Instance.gameType != GameType.Solo)
-                player.MonsterDestroy(unitID);
+            if (GameManager.I.gameType != GameType.Solo)
+                player.MonsterDestroy(_unitID);
 
             DestroyMonster();
         }
@@ -247,15 +245,15 @@ namespace RandomFortress
             
             StopCoroutine(MonsterUpdate());
 
-            player.monsterOrder.Remove(this);
-            player.monsterDic.Remove(unitID);
+            player.monsterList.Remove(this);
+            player.entityDic.Remove(_unitID);
             transform.DOKill();
             
-            GameUIManager.Instance.UpdateInfo();
+            GameUIManager.I.UpdateUI();
             
-            Destroy(gameObject);
+            Release();
         }
-
+        
         #region Debuff
 
         public void ApplyDebuff(DebuffBase debuffBase)
@@ -286,6 +284,18 @@ namespace RandomFortress
                     return debuffBase;
             }
             return null;
+        }
+
+        public int GetDebuffCount(DebuffIndex target)
+        {
+            int count = 0;
+            foreach (var debuffBase in _debuffList)
+            {
+                if (debuffBase.debuffIndex == target)
+                    ++count;
+            }
+
+            return count;
         }
 
         #endregion

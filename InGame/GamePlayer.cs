@@ -1,12 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using Photon.Pun;
 using Photon.Realtime;
-
-
-using RandomFortress.Data;
-
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -15,65 +10,79 @@ using Random = UnityEngine.Random;
 
 namespace RandomFortress
 {
-    public class GamePlayer : MonoBehaviour, IPunObservable
+    public class GamePlayer : MonoBehaviour
     {
-        [Header("포톤")]
-        private PhotonView photonView;
-        public bool isLocalPlayer = false;
-        public int actorNumber;
+        #region 변수
+
+#if UNITY_EDITOR
+        public int CheatTowerIndex = -1;
+#endif
+        [Header("Photon")] 
+        [SerializeField] private int actorNumber;
+        [SerializeField] private PhotonView photonView;
+        [SerializeField] private Player photonPlayer; // 포톤 플레이어
+        public SerializedDictionary<int,EntityBase> entityDic = new(); // 모든유닛 저장
         
         [Header("플레이어 정보")]
-        public int gold;
-        public int playerHp;
-        public BaseSkill[] skillArr;
-        public List<RewardData> rewardDatas = new List<RewardData>();
-        public List<ExtraInfo> abilityList = new List<ExtraInfo>(); // 선택한 어빌리티 인덱스를 가지고있음
+        public int gold; // 골드
+        public int playerHp; // 현재 체력
+        public BaseSkill[] skillArr; // 보유한 스킬
+        public List<ExtraInfo> abilityList = new(); // 선택한 어빌리티 인덱스를 가지고있음
         
         [Header("몬스터")]
-        public SerializedDictionary<int,MonsterBase> monsterDic = new SerializedDictionary<int, MonsterBase>(); // 유닛id로 식별
-        public List<MonsterBase> monsterOrder = new List<MonsterBase>();
+        public List<MonsterBase> monsterList = new(); // 몬스터를 생성 순서대로 집어넣은 리스트
 
         [Header("타워")]
-        public Transform towerParent;
-        public int towerCount = 0;
-        public TowerBase[] Towers; // 타워정보
+        public Transform towerParent; // 타워 생성될 부모위치
+        public int towerCount = 0; // 생성된 타어 갯수
+        public TowerBase[] Towers; // 타워
         public Transform[] TowerFixPos; // 타워 설치된 장소
-        public int[] TowerDeck; // 현재 선택된 8개의 타워값
-        // public SerializedDictionary<int, TowerInfo> towerInfoDic = new SerializedDictionary<int, TowerInfo>(); // 타워 덱. 업그레이드시 Info 교체
-        public SerializedDictionary<int, TowerResultData> totalDmgDic = new SerializedDictionary<int, TowerResultData>(); // 타워별 데미지 누적
+        public int[] TowerDeck; // 타워덱
+        public SerializedDictionary<int, TowerResultData> totalDmgDic = new (); // 타워별 데미지 누적
 
-        [Header("버프리스트")] 
-        private bool _isAbilityBuff = false;
-        public List<EntityBase> bulletList = new List<EntityBase>();
+        [Header("총알")]
+        public List<BulletBase> bulletList = new(); // 총알
+        
+        [Header("버프")] 
+        private bool _isAbilityBuff = false; // 어빌리티 카드 버프
 
         [Header("스테이지")] 
-        [HideInInspector] public GameMap gameMap;
+        public GameMap gameMap; // 게임앱
         public int stageProcess; // 시작 스테이지
-        public TextMeshProUGUI stageText;
-        public Transform HpTrf;
-        
         
         [Header("어빌리티")] 
-        [SerializeField] private Transform abilityTrf;
-        private AbilityCard[] abilityCards;
-        private int abilitySelectCount = 0;
+        [SerializeField] private Transform abilityTrf; // 어빌리티 부모
+        private AbilityCard[] abilityCards; // 어빌리티 카드 표시
+        private int abilitySelectCount = 0; // 획득한 어빌리티 카드 갯수
         
         [Header("스킬")]
-        [SerializeField] private Image skillDim;
+        [SerializeField] private Image skillDim; // 스킬 사용시 딤
+        
+        [Header("UI")]
+        public TextMeshProUGUI stageText; // 스테이지 표시 텍스트
+        public Transform HpTrf; // 플레이어 체력
+        public TextMeshProUGUI nicknameText; // 플레이어 닉네임
         
         
-        public bool IsAbilityBuff => _isAbilityBuff;
-        public ExtraInfo extraInfo { get; private set; } // 어빌리티로 증가한 모든 능력치를 이곳에 적용시킴
-        
-        
-        private int total_tower_pos = 0;
+        private int total_tower_pos = 0; // 설치 가능한 타워 갯수
         private bool _isBuildProgress; // 현재 타워가 건설중인가
         
+        
+        public bool IsAbilityBuff => _isAbilityBuff; // 어빌리티 카드 추가선택
+        public ExtraInfo extraInfo { get; private set; } // 어빌리티로 증가한 모든 능력치를 이곳에 적용시킴
+        public bool IsLocalPlayer { get; private set; }
+        public int ActorNumber { get; private set; }
+        public string Nickname { get; private set; }
+        
+        public string Userid { get; set; } // firebase 구글 userdid를 사용함
+
+        #endregion
+        
+        #region 설정
 
         public void Awake()
         {
             towerParent = transform.Find("Towers");
-            photonView = GetComponent<PhotonView>();
             extraInfo = new ExtraInfo();
 
             int i = 0;
@@ -84,6 +93,71 @@ namespace RandomFortress
             }
 
         }
+        
+        // 플레이어 설정
+        public void SetPlayer(Player p, GameMap map)
+        {
+            // 게임맵 설정
+            gameMap = map;
+
+            // 플레이어 설정
+            photonPlayer = p;
+            
+            nicknameText.SetText(p.NickName);
+            
+            
+            IsLocalPlayer = p.IsLocal;
+            actorNumber = ActorNumber = p.ActorNumber;
+            Nickname = p.NickName;
+            
+            InitPlayer();
+        }
+
+        void InitPlayer()
+        {
+            // 타워설치할 공간
+            Transform seatPos = gameMap.TowerSeatPos;
+            total_tower_pos = seatPos.childCount;
+            
+            Towers = new TowerBase[total_tower_pos];
+            TowerFixPos = seatPos.GetChildren();
+            TowerDeck = Account.I.GetTowerDeck;
+            
+            // 게임 데이터 초기화
+            gold = GameConstants.StartGold;
+            playerHp = GameConstants.StartHp;
+            
+            // 스킬 세팅
+            skillArr = new BaseSkill[GameConstants.SKILL_DECK_COUNT];
+            
+            int skillIndex = Account.I.Data.skillDeck[0];
+            SkillCreator(0, skillIndex);
+            
+            skillIndex = Account.I.Data.skillDeck[1];
+            SkillCreator(1, skillIndex);
+            
+            skillIndex = Account.I.Data.skillDeck[2];
+            SkillCreator(2, skillIndex);
+            
+            // Ad 디버프 적용
+            foreach (var adDebuff in Account.I.Data.adDebuffs)
+            {
+                switch (adDebuff.type)
+                {
+                    case AdRewardType.AbilityCard:
+                        _isAbilityBuff = true;
+                        break;
+                }
+            }
+            
+            GameUIManager.I.UpdateUI();
+        }
+        
+        private GamePlayer GetPlayer(int actor) => GameManager.I.GetPlayer(actor);
+
+        #endregion
+
+        #region 플레이어
 
         public void AddTotalDamage(int index, int damage, int tier)
         {
@@ -102,135 +176,78 @@ namespace RandomFortress
                 totalDmgDic.Add(index, data);
             }
         }
-
-        #region IPunObservable implementation
-
-        public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-        {
-            if (stream.IsWriting)
-            {
-                // We own this player: send the others our data
-                // stream.SendNext(PlayerHp);
-            }
-            else
-            {
-                // Network player, receive data
-                // this.PlayerHp = (int)stream.ReceiveNext();
-            }
-        }
         
-        #endregion
-        
-        // 솔로모드 플레이어 설정
-        public void SetPlayer(GameMap map)
-        {
-            gameMap = map;
-            
-            // 자기자신인지 체크
-            isLocalPlayer = true;
-            
-            InitPlayer();
-        }
-        
-        // 1대1 플레이어 설정
-        public void SetPlayer(Player p, GameMap map)
-        {
-            gameMap = map;
-            
-            actorNumber = p.ActorNumber;
-
-            // 자기자신인지 체크
-            isLocalPlayer = p.IsLocal;
-
-            InitPlayer();
-        }
-
-        void InitPlayer()
-        {
-            // 타워설치할 공간
-            Transform seatPos = gameMap.TowerSeatPos;
-            total_tower_pos = seatPos.childCount;
-            
-            Towers = new TowerBase[total_tower_pos];
-            TowerFixPos = seatPos.GetChildren();
-            TowerDeck = Account.Instance.GetTowerDeck;
-            
-            // 게임 데이터 초기화
-            gold = 1000;
-            playerHp = 5;
-            
-            // 스킬 세팅
-            skillArr = new BaseSkill[GameConstants.SKILL_DECK_COUNT];
-            
-            int skillIndex = Account.Instance.Data.skillDeck[0];
-            SkillCreator(0, skillIndex);
-            
-            skillIndex = Account.Instance.Data.skillDeck[1];
-            SkillCreator(1, skillIndex);
-            
-            skillIndex = Account.Instance.Data.skillDeck[2];
-            SkillCreator(2, skillIndex);
-            
-            // Ad 디버프 적용
-            foreach (var adDebuff in Account.Instance.Data.adDebuffList)
-            {
-                switch (adDebuff.type)
-                {
-                    case AdDebuffType.AbilityCard:
-                        _isAbilityBuff = true;
-                        break;
-                }
-            }
-            
-            GameUIManager.Instance.UpdateInfo();
-        }
-        
+        // 몬스터 파괴시 골드획득
         public void KillMonster(int reward)
         {
-            if (!isLocalPlayer)
-                return;
-                
             gold += reward + extraInfo.rewardMonster;
         }
 
+        // 플레이어에게 데미지를 준다. 로컬플레이어만
         public void DamageToPlayer(int value = 1)
         {
-            if (!isLocalPlayer)
+            if (!IsLocalPlayer)
                 return;
             
             playerHp -= value;
-            UpdatePlayerHp();
-            GameUIManager.Instance.UpdateInfo();
-            
+            UpdatePlayerHpUI();
+            GameUIManager.I.UpdateUI();
+
             if (playerHp <= 0)
-                GameManager.Instance.EndGame();
-            
-            if (GameManager.Instance.gameType != GameType.Solo)
-                photonView.RPC("PlayerHpSync", RpcTarget.Others, actorNumber, playerHp);
-        }
-        
-        private GamePlayer GetPlayer(int actor)
-        {
-            if (GameManager.Instance.gameType == GameType.Solo)
-                return GameManager.Instance.myPlayer;
-            
-            if (!GameManager.Instance.players.ContainsKey(actor))
             {
-                Debug.Log("Not Found Player!! "+ actor);
-                return GameManager.Instance.myPlayer;
+                GameManager.I.EndGame();
             }
-            
-            return GameManager.Instance.players[actor];
+
+            if (GameManager.I.gameType != GameType.Solo)
+                photonView.RPC(nameof(PlayerHpRpc), RpcTarget.Others, playerHp);
         }
 
         [PunRPC]
-        public void PlayerHpSync(int actor, int hp)
+        private void PlayerHpRpc(int hp)
         {
-            GamePlayer player = GetPlayer(actor);
-            
+            GamePlayer player = GameManager.I.otherPlayer;
             player.playerHp = hp;
-            player.UpdatePlayerHp();
+            player.UpdatePlayerHpUI();
         }
+        
+        private void UpdatePlayerHpUI()
+        {
+            // 체력 업데이트
+            for (int i = 0; i < 5; ++i)
+            {
+                HpTrf.GetChild(i).SetActive(false);
+                if (i < playerHp)
+                    HpTrf.GetChild(i).SetActive(true);
+            }
+        }
+        
+        // 게임 종료시에 호출
+        public void UpdateGameResult()
+        {
+            foreach (var tower in Towers)
+            {
+                if (tower == null)
+                    continue;
+                tower.UpdateGameResult();
+            }
+        }
+        
+        public void SetAbility(AbilityData abilityData)
+        {
+            abilityList.Add(abilityData.extraInfo);
+            extraInfo.AddExtraInfo(abilityData.extraInfo);
+            abilityCards[abilitySelectCount++].SetCard(abilityData);
+        }
+
+        public void StageClear()
+        {
+            stageProcess++;
+            stageText.text = stageProcess.ToString();
+        }
+
+        #endregion
+        
+        #region 타워
         
         // 타워 생성 조건 검사 및 초기화
         private bool CanCreateTower()
@@ -280,208 +297,174 @@ namespace RandomFortress
             int posIndex = SelectRandomTowerPosition();
             if (posIndex == -1) return;
             
-            GameUIManager.Instance.SetLockButton(Buttons.Build, false);
+            GameUIManager.I.SetLockButton(Buttons.Build, false);
             
             gold -= GameConstants.TowerCost;
-            
-            int rand = Random.Range(0, TowerDeck.Length);
-            int towerIndex = TowerDeck[rand];
 
-            // towerIndex = (int)TowerIndex.Elephant;
-            
-            // 타워 생성
-            if (GameManager.Instance.gameType == GameType.Solo)
-                CreateTowerRpc(actorNumber, posIndex, towerIndex, 1);
-            else
-                photonView.RPC("CreateTowerRpc", RpcTarget.AllViaServer, 
-                    actorNumber, posIndex, towerIndex, 1);
-            
+            BuildRandomTower(1, posIndex);
         }
         
-        // 타워합체 후 상위타워 생성
+        // 타워 업그레이드 시에는 티어 및 위치가 고정되서 온다
         public void BuildRandomTower(int tier , int posIndex)
         {
             // 타워 랜덤 선택
             int rand = Random.Range(0, TowerDeck.Length);
             int towerIndex = TowerDeck[rand];
+
+#if UNITY_EDITOR
+            towerIndex = CheatTowerIndex != -1 ? CheatTowerIndex : towerIndex;
+#endif
             
-            // 타워생성
-             if (GameManager.Instance.gameType == GameType.Solo)
-                CreateTowerRpc(actorNumber, posIndex, towerIndex, tier);
+            // 타워 생성
+            int unitId = GameManager.I._unitID;
+            
+            if (GameManager.I.gameType == GameType.Solo)
+                CreateTowerRpc(ActorNumber, posIndex, towerIndex, tier, unitId);
             else
-                photonView.RPC("CreateTowerRpc", RpcTarget.AllViaServer, 
-                actorNumber, posIndex, towerIndex, tier);
+                photonView.RPC(nameof(CreateTowerRpc), RpcTarget.All, ActorNumber, posIndex, towerIndex, tier, unitId);
+
+            ++GameManager.I._unitID;
         }
         
         [PunRPC]
-        public void CreateTowerRpc(int actor, int posIndex, int towerIndex, int tier)
+        public void CreateTowerRpc(int actor, int posIndex, int towerIndex, int tier, int unitId)
         {
             GamePlayer player = GetPlayer(actor);
-            
-            // Debug.Log("actor : "+ actor + ", Tower Create " + towerIndex + "," + posIndex + ", tier : "+tier);
-            
-            SoundManager.Instance.PlayOneShot("tower_create");
+            player.CreateTower(posIndex, towerIndex, tier, unitId);
+        }
+
+        private void CreateTower(int posIndex, int towerIndex, int tier, int unitId)
+        {
+            SoundManager.I.PlayOneShot(SoundKey.tower_create);
                         
-            player._isBuildProgress = false;
+            _isBuildProgress = false;
             
             // 생성되는 타워자리 처리
-            Transform trf = player.TowerFixPos[posIndex];
+            Transform trf = TowerFixPos[posIndex];
             
             // 로컬로 타워생성
-            GameObject towerGo = SpawnManager.Instance.GetTower(trf.position, towerIndex);
+            GameObject towerGo = SpawnManager.I.GetTower(trf.position, towerParent, towerIndex);
             TowerBase tower = towerGo.GetComponent<TowerBase>();
             
-            tower.Init(player, posIndex, towerIndex, tier);
-            player.Towers[posIndex] = tower;
-            player.towerCount += 1;
+            tower.Init(this, posIndex, towerIndex, tier);
+            Towers[posIndex] = tower;
+            towerCount += 1;
+            
+            entityDic.Add(unitId, tower);
+            tower._unitID = unitId;
 
-            GameUIManager.Instance.SetLockButton(Buttons.Build, true);
-            GameUIManager.Instance.UpdateInfo();
+            GameUIManager.I.SetLockButton(Buttons.Build, true);
+            GameUIManager.I.UpdateUI();
         }
         
+        // 타워 판매
         public void SellTower(bool useSkill = false)
         {
-            TowerBase focusTower = GameManager.Instance.focusTower;
+            TowerBase focusTower = GameManager.I.focusTower;
             
             int getGold = useSkill ? focusTower.Info.salePrice*2 :focusTower.Info.salePrice;
             gold += getGold;
             
-            GameUIManager.Instance.ShowGoldText(focusTower.transform.position, getGold);
-            
-            if (GameManager.Instance.gameType == GameType.Solo)
-                TowerDestroyRpc(actorNumber, focusTower.TowerPosIndex);
-            else
-                photonView.RPC("TowerDestroyRpc", RpcTarget.AllViaServer, actorNumber, focusTower.TowerPosIndex);
+            GameUIManager.I.ShowGoldText(focusTower.transform.position, getGold);
+            TowerDestroy(focusTower.TowerPosIndex);
         }
-        
+
+        // 타워 파괴
         public void TowerDestroy(int towerID)
         {
-            if (GameManager.Instance.gameType == GameType.Solo)
-                TowerDestroyRpc(actorNumber, towerID);
+            if (GameManager.I.gameType == GameType.Solo)
+                TowerDestroyRpc(ActorNumber, towerID);
             else
-                photonView.RPC("TowerDestroyRpc", RpcTarget.AllViaServer, actorNumber, towerID);
+                photonView.RPC(nameof(TowerDestroyRpc), RpcTarget.All, ActorNumber, towerID);
         }
-        
+
         [PunRPC]
-        public void TowerDestroyRpc(int actor, int towerID)
+        private void TowerDestroyRpc(int actor, int towerID)
         {
             GamePlayer player = GetPlayer(actor);
+            player.DoTowerDestroy(towerID);
+        }
+
+        private void DoTowerDestroy(int towerID)
+        {
+            SoundManager.I.PlayOneShot(SoundKey.tower_sell);
             
-            SoundManager.Instance.PlayOneShot("tower_sell");
+            TowerBase tower = Towers[towerID];
             
-            TowerBase tower = player.Towers[towerID];
-            player.Towers[tower.TowerPosIndex] = null;
-            player.towerCount -= 1;
+            entityDic.Remove(tower._unitID);
+            
+            Towers[tower.TowerPosIndex] = null;
+            towerCount -= 1;
             tower.TowerDestroy();
-
-            GameManager.Instance.HideForcusTower();
-            GameUIManager.Instance.UpdateInfo();
-        }
-
-        public void UpgradeTower(int towerPosIndex, int tier)
-        {
-            if (GameManager.Instance.gameType == GameType.Solo)
-                UpgradeTowerRpc(actorNumber, towerPosIndex, tier);
-            else
-                photonView.RPC("UpgradeTowerRpc", RpcTarget.AllViaServer, actorNumber, towerPosIndex, tier);
-        }
-        
-        [PunRPC]
-        public void UpgradeTowerRpc(int actor, int towerID, int tier)
-        {
-            GamePlayer player = GetPlayer(actor);
             
-            TowerBase tower = player.Towers[towerID];
-            tower.UpgradeTower(tier);
-            
-            GameManager.Instance.HideForcusTower();
-            GameUIManager.Instance.UpdateInfo();
+            GameManager.I.HideFocusTower();
+            GameUIManager.I.UpdateUI();
         }
 
         // 총탄 발사시
         public void Shooting(int towerPosIndex, int unitID, int damage, int damageType, bool isDebuff = false)
         { 
-            photonView.RPC("ShootingRpc", RpcTarget.Others, 
-                actorNumber,towerPosIndex, unitID, damage, damageType, isDebuff);
+            if (GameManager.I.gameType != GameType.Solo)
+                photonView.RPC(nameof(ShootingRpc), RpcTarget.Others, ActorNumber,towerPosIndex, unitID, damage, damageType, isDebuff);
         }
         
         [PunRPC]
-        public void ShootingRpc(int actor, int towerPosIndex, int unitID, int damage, int damageType, bool isDebuff)
+        private void ShootingRpc(int actor, int towerPosIndex, int unitID, int damage, int damageType, bool isDebuff)
         {
             GamePlayer player = GetPlayer(actor);
-            TowerBase tower = player.Towers[towerPosIndex];
-            if (tower != null)
-                tower.ReceiveShooting(unitID, damage, damageType, isDebuff);
-        }
-        
-        public Vector3 GetNext(int index)
-        {
-            bool isMine = GameManager.Instance.myPlayer.actorNumber == actorNumber;
-            Vector3 next = GameManager.Instance.GetRoadPos(index);
-            if (!isMine)
-                next.y += GameManager.Instance.offset;
-            return next;
-        }
-
-        // 게임 종료시에 호출
-        public void UpdateGameResult()
-        {
-            foreach (var tower in Towers)
-            {
-                if (tower == null)
-                    continue;
-                tower.UpdateGameResult();
-            }
-        }
-        
-        public void SkipReward(int reward)
-        {
-            if (!isLocalPlayer)
-                return;
             
-            gold += reward;
+            if (player.entityDic.ContainsKey(unitID))
+            {
+                TowerBase tower = player.Towers[towerPosIndex];
+                if (tower != null)
+                    tower.ReceiveShooting(unitID, damage, damageType, isDebuff);
+                else
+                    Debug.Log("대상 타워를 찾을수없다");
+            }
+            else
+                Debug.Log("대상 몬스터를 찾을수 없다");
         }
-
+        
+        #endregion
+        
+        #region 몬스터
+        
         public void MonsterDestroy(int unitID)
         {
-            photonView.RPC("MonsterDestroyRpc", RpcTarget.Others, actorNumber, unitID);
+            photonView.RPC(nameof(MonsterDestroyRpc), RpcTarget.Others, ActorNumber, unitID);
         }
         
         [PunRPC]
-        public void MonsterDestroyRpc(int actor, int unitID)
+        private void MonsterDestroyRpc(int actor, int unitID)
         {
             GamePlayer player = GetPlayer(actor);
-            if (player.monsterDic.ContainsKey(unitID))
-                player.monsterDic[unitID].DestroyMonster();
-            else Debug.Log("Not Found Monster!! "+ actor);
-        }
-        
-        public void SetAbility(AbilityData abilityData)
-        {
-            abilityList.Add(abilityData.extraInfo);
-            extraInfo.AddExtraInfo(abilityData.extraInfo);
-            abilityCards[abilitySelectCount++].SetCard(abilityData);
+            player.DoMonsterDestroy(unitID);
         }
 
-        public void StageClear()
+        private void DoMonsterDestroy(int unitID)
         {
-            stageProcess++;
-            stageText.text = "Stage " + stageProcess.ToString();
-        }
-        
-        public void UpdatePlayerHp()
-        {
-            // 체력 업데이트
-            for (int i = 0; i < 5; ++i)
+            if (entityDic.TryGetValue(unitID, out var value))
             {
-                HpTrf.GetChild(i).SetActive(false);
-                if (i < playerHp)
-                    HpTrf.GetChild(i).SetActive(true);
+                MonsterBase monster = value as MonsterBase;
+                monster?.DestroyMonster();
             }
+            else Debug.Log("플레이어 "+ ActorNumber +", 몬스터파괴: "+ unitID);
         }
         
-        #region Skill
-
+        public Vector3 GetMonsterNextTargetPoint(int index)
+        {
+            bool isMine = GameManager.I.myPlayer.ActorNumber == ActorNumber;
+            Vector3 next = GameManager.I.GetRoadPos(index);
+            if (!isMine)
+                next.y += GameManager.I.offset;
+            return next;
+        }
+        
+        #endregion
+        
+        #region 스킬
+        
+        // 스킬 생성
         private void SkillCreator(int slotIndex, int skillIndex)
         {
             BaseSkill skill = null;
@@ -491,14 +474,15 @@ namespace RandomFortress
                 case SkillIndex.WaterSlice:  skill = gameObject.AddComponent<WaterSliceSkill>(); break;
                 case SkillIndex.ChangePlace: skill = gameObject.AddComponent<ChangePlaceSkill>(); break;
                 case SkillIndex.GoodSell: skill = gameObject.AddComponent<GoodSellSKill>(); break;
-                default: JustDebug.LogError("Skill Index Not Found"); break;
+                default: Debug.LogError("Skill Index Not Found"); break;
             }
 
-            SkillButton button = GameUIManager.Instance.GetSkillButton(slotIndex);
+            SkillButton button = GameUIManager.I.GetSkillButton(slotIndex);
             skill.Init(skillIndex, this, button);
             skillArr[slotIndex] = skill;
         }
         
+        // 스킬 사용시점에 사용할수있는 스킬이 있는지 체크
         public bool CheckUserAvailableSkill(BaseSkill.SkillAction skillAction, params object[] values)
         {
             foreach (BaseSkill skill in skillArr)
@@ -519,72 +503,77 @@ namespace RandomFortress
             return false;
         }
         
-        public void ShowSkillDim()
+        // 스킬 딤 설정
+        public void SetSkillDim(bool show)
         {
-            skillDim.DOFade(0.6f, 0.2f).SetUpdate(true);
+            if (show)
+            {
+                skillDim.DOFade(0.6f, 0.2f);
+                foreach (var dim in skillDim.transform.GetChildren())
+                    dim.GetComponent<Image>().DOFade(1f, 0.2f);
+            }
+            else
+            {
+                skillDim.DOFade(0f, 0.2f);
+                foreach (var dim in skillDim.transform.GetChildren())
+                    dim.GetComponent<Image>().DOFade(0f, 0.2f);
+            }
         }
         
-        public void HideSkillDim()
-        {
-            skillDim.DOFade(0f, 0.2f).SetUpdate(true);
-        }
-        
+        // 스킬 사용
         public void SkillUse(int skillBtnIdex)
-        { 
-            photonView.RPC("SkillUseRpc", RpcTarget.Others, actorNumber, skillBtnIdex);
+        {
+            if (GameManager.I.gameType == GameType.Solo)
+            {
+                SkillUseRpc(PhotonNetwork.LocalPlayer.ActorNumber, skillBtnIdex);
+            }else 
+            {
+                photonView.RPC(nameof(SkillUseRpc), RpcTarget.All, ActorNumber, skillBtnIdex);
+            }
         }
         
         [PunRPC]
-        public void SkillUseRpc(int actor, int skillBtnIdex)
+        private void SkillUseRpc(int actor, int skillBtnIdex)
         {
             GamePlayer player = GetPlayer(actor);
             
-            GameUIManager.Instance.ShowSkillDim(false);
-            
+            GameManager.I.SetSkillDim(true,player);
             if (player.skillArr[skillBtnIdex].CanUseSkill())
-            {
                 player.skillArr[skillBtnIdex].SkillStart();
-            }
         }
 
+        // 스킬사용 종료시 (타인에게 호출할때만 사용됨)
         public void SkillEnd(int skillIndex, params object[] values)
         {
-            Debug.Log("SkillEnd : " + skillIndex + ", "+ values);
+            Debug.Log("스킬종료 : " + skillIndex + ", "+ values);
             
-            if (GameManager.Instance.gameType == GameType.Solo)
+            if (GameManager.I.gameType == GameType.Solo)
                 return;
 
             switch ((SkillIndex)skillIndex)
             {
-                case SkillIndex.WaterSlice: photonView.RPC("SkillEndRpc", RpcTarget.Others, actorNumber); break;
-                case SkillIndex.ChangePlace: photonView.RPC("SkillSwapTowerRpc", RpcTarget.Others, actorNumber, (int)values[0], (int)values[1]);break;
-                case SkillIndex.GoodSell: photonView.RPC("SkillSellTowerRpc", RpcTarget.Others, actorNumber, (int)values[0], (int)values[1]);break;
+                case SkillIndex.WaterSlice: photonView.RPC(nameof(SkillEndRpc), RpcTarget.Others, ActorNumber); break;
+                case SkillIndex.ChangePlace: photonView.RPC(nameof(SkillSwapTowerRpc), RpcTarget.Others, ActorNumber, (int)values[0], (int)values[1]);break;
+                case SkillIndex.GoodSell: photonView.RPC(nameof(SkillSellTowerRpc), RpcTarget.Others, ActorNumber, (int)values[0], (int)values[1]);break;
             }
         }
         
         [PunRPC]
-        public void SkillEndRpc(int playerActorNumber)
+        private void SkillEndRpc(int playerActorNumber)
         {
             Debug.Log("SkillEndRpc");
             GamePlayer player = GetPlayer(playerActorNumber);
             
-            player.HideSkillDim();
+            player.SetSkillDim(false);
         }
         
         [PunRPC]
-        public void SkillSwapTowerRpc(int playerActorNumber, int towerIndexA, int towerIndexB)
+        private void SkillSwapTowerRpc(int playerActorNumber, int towerIndexA, int towerIndexB)
         {
             Debug.Log("SkillSwapTowerRpc : "+towerIndexA + ", "+ towerIndexB);
             GamePlayer player = GetPlayer(playerActorNumber);
             
-            player.HideSkillDim();
-            
-
-            if (player == null)
-            {
-                Debug.LogError("Player not found");
-                return;
-            }
+            player.SetSkillDim(false);
 
             // 타워 배열과 타워 인덱스 확인
             TowerBase[] towers = player.Towers;
@@ -603,45 +592,78 @@ namespace RandomFortress
 
             towerA.Swap(towerB);
         }
-
+        
         [PunRPC]
-        public void SkillSellTowerRpc(int playerActorNumber, int towerPosIndex, int getGold)
+        private void SkillSellTowerRpc(int playerActorNumber, int towerPosIndex, int getGold)
         {
             Debug.Log("SkillSellTowerRpc");
             GamePlayer player = GetPlayer(playerActorNumber);
             
-            player.HideSkillDim();
-
-            Vector3 startPos = TowerFixPos[towerPosIndex].transform.position;
+            player.SetSkillDim(false);
             
-            GameUIManager.Instance.ShowGoldText(startPos, getGold);
+            Vector3 startPos = TowerFixPos[towerPosIndex].transform.position;
+            GameUIManager.I.ShowGoldText(startPos, getGold);
         }
         
         
         #endregion
 
+        #region 총알
+
         public void AddBullet(BulletBase bullet)
         {
+            // entityDic.Add(bullet.unitID, bullet);
             bulletList.Add(bullet);
         }
 
         public void RemoveBullet(BulletBase bullet)
         {
+            // entityDic.Remove(bullet.unitID);
             bulletList.Remove(bullet);
         }
+        
+        #endregion
 
-        public int GetTowerID(TowerBase tower)
+        #region 네트웍
+
+        // 네크워크를 통한 동기화
+        public void SynchronizeOnReturn()
         {
-            for (int i = 0; i < Towers.Length; ++i)
-            {
-                if (tower == Towers[i])
-                {
-                    return i;
-                }
-            }
+            foreach (MonsterBase monster in monsterList)
+                photonView.RPC(nameof(ReceiveSyncData), RpcTarget.Others, monster._unitID, monster.SerializeSyncData());
 
-            Debug.Log("Not Found TowerID : "+ tower.name);
-            return -1;
+            foreach (TowerBase tower in Towers)
+            {
+                if (tower != null)
+                    photonView.RPC(nameof(ReceiveSyncData), RpcTarget.Others, tower._unitID, tower.SerializeSyncData());
+            }
+            
+            // foreach (var bullet in bulletList)
+            //     photonView.RPC(nameof(ReceiveSyncData), RpcTarget.Others, bullet.unitID, bullet.SerializeSyncData());
+        }
+        
+        // 네트워크를 통해 동기화 데이터 전송
+        [PunRPC]
+        protected void ReceiveSyncData(int unitID, object[] syncData)
+        {
+            GameManager.I.otherPlayer.EntitySync(unitID, syncData);
+        }
+
+        private void EntitySync(int unitID, object[] syncData)
+        {
+            if (entityDic.TryGetValue(unitID, out EntityBase entity))
+            {
+                entity.DeserializeSyncData(syncData);
+            }
+            else
+                Debug.Log("Not Found Entity ID : "+unitID);
+        }
+        
+        #endregion
+        
+        private void OnDestroy()
+        {
+            StopAllCoroutines();
         }
     }
 }

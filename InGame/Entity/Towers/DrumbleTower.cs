@@ -1,5 +1,5 @@
 
-using RandomFortress.Data;
+
 
 using UnityEngine;
 
@@ -23,38 +23,27 @@ namespace RandomFortress
 
         protected override void Shooting()
         {
-            SetState(TowerStateType.Attack);
-            
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
-            DrumBallBullet bullet = bulletGo.GetComponent<DrumBallBullet>();
-            
             DamageInfo damageInfo = GetDamage();
-            object[] paramsArr = { damageInfo, attackArea };
-            bullet.Init(player, Info.bulletIndex, Target, paramsArr);
-            
-            //
-            TotalDamege += damageInfo._damage;
-            
-            if (GameManager.Instance.gameType != GameType.Solo)
-                player.Shooting(TowerPosIndex, Target.unitID, damageInfo._damage, (int)damageInfo._type);   
+            AddDamage(damageInfo._damage);
+            DoShooting(Target, damageInfo);
+            player.Shooting(TowerPosIndex, Target._unitID, damageInfo._damage, (int)damageInfo._type);   
         }
         
         public override void ReceiveShooting(int unitID, int damage, int damageType, bool isDebuff)
         {
-            if (!player.monsterDic.ContainsKey(unitID))
-            {
-                Debug.Log("Not Found Target!!!");
-                return;
-            }
-            MonsterBase target = player.monsterDic[unitID];
-            
+            MonsterBase target = player.entityDic[unitID] as MonsterBase;
+            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
+            DoShooting(target, damageInfo);
+        }
+        
+        protected override void DoShooting(MonsterBase target, DamageInfo damageInfo)
+        {
             SetState(TowerStateType.Attack);
 
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
+            GameObject bulletGo = SpawnManager.I.GetBullet(GetBulletStartPos(), Info.bulletIndex);
             DrumBallBullet bullet = bulletGo.GetComponent<DrumBallBullet>();
             
-            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
-            object[] paramsArr = { damageInfo, attackArea };
+            object[] paramsArr = { damageInfo, attackArea, this };
             bullet.Init(player, Info.bulletIndex, target, paramsArr);
         }
     }

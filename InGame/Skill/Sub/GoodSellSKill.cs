@@ -1,4 +1,5 @@
 ﻿
+using Photon.Pun;
 using UnityEngine;
 
 namespace RandomFortress
@@ -10,8 +11,7 @@ namespace RandomFortress
     {
         public override void Init(int skillIndex, GamePlayer gPlayer, SkillButton button)
         {
-            data =  DataManager.Instance.skillDataDic[skillIndex];
-            Debug.Log("Skill Create 7002 : " + data.index);
+            data =  DataManager.I.skillDataDic[skillIndex];
             _coolTime = data.coolTime;
             
             player = gPlayer;
@@ -25,27 +25,27 @@ namespace RandomFortress
         public override void SkillStart()
         {
             useSkill = true;
-            StartCoroutine(WaitSkillUseCor());
+            StartCoroutine(WaitAndForceSkillUseCor());
         }
 
         public override void UseSkill(params object[] values)
         {
-            if (GameManager.Instance.focusTower == null)
+            Debug.Log("Use SKill "+data.skillName);
+            
+            if (GameManager.I.focusTower == null)
                 return;
 
-            int towerPosIndex = GameManager.Instance.focusTower.TowerPosIndex;
-            int getGold = GameManager.Instance.focusTower.Info.salePrice*2;
+            int towerPosIndex = GameManager.I.focusTower.TowerPosIndex;
+            int getGold = GameManager.I.focusTower.Info.salePrice*2;
             
             player.SellTower(true);
-            StopCoroutine(WaitSkillUseCor());
+            StopCoroutine(WaitAndForceSkillUseCor());
             
-            bool isMine = GameManager.Instance.myPlayer == player;
-            GameUIManager.Instance.HideSkillDim(isMine);
+            GameManager.I.SetSkillDim(false,player);
             StartCoroutine(WaitCoolTimeCor(_coolTime));
             
-            Debug.Log("Skill Use 7002 : " + data.index);
-            
-            player.SkillEnd(data.index, new object[]{towerPosIndex,getGold});
+            if (player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+                player.SkillEnd(data.index, new object[]{towerPosIndex,getGold});
         }
     }
 }

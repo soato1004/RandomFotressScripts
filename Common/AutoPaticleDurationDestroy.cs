@@ -5,11 +5,13 @@ namespace RandomFortress
     public class AutoPaticleDurationDestroy : MonoBehaviour
     {
         private ParticleSystem pa;
+        private EntityBase entity;
         [SerializeField] private float lifeTime = -1;
 
         void Awake()
         {
             pa = GetComponent<ParticleSystem>();
+            entity = GetComponent<EntityBase>();
             if (pa != null)
             {
                 // 파티클 시스템이 루프인지 확인하고, 최대 수명을 고려하여 파괴 시점 계산
@@ -18,8 +20,11 @@ namespace RandomFortress
                     var mainModule = pa.main;
                     lifeTime = mainModule.duration + mainModule.startLifetime.constantMax;
                 }
-                
-                Destroy(gameObject, lifeTime);
+
+                if (entity != null)
+                    entity.Release();
+                else
+                    Destroy(gameObject, lifeTime);
             }
             else
             {

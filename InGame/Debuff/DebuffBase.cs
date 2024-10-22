@@ -6,10 +6,13 @@ namespace RandomFortress
 {
     public class DebuffBase : MonoBehaviour
     {
-        protected float duration = 0f;
+        [SerializeField] protected float duration = 0f; // 버프 지속시간
+        [SerializeField] protected float elapsedTimer; // 버프 경과 시간
+        [SerializeField] protected float tickInterval; // 데버프 틱 간격
+        [SerializeField] protected float tickTimer = 0; // 틱 타이머
         
-        protected MonsterBase monster;
-        public DebuffIndex debuffIndex { get; protected set; }
+        protected MonsterBase monster; // 현재 디버프 적용중인 타겟
+        public DebuffIndex debuffIndex { get; protected set; } // 디버프 인덱스값
         
         // public DebuffType debuffType { get; protected set; }
 
@@ -30,7 +33,7 @@ namespace RandomFortress
         {
             if (monster.monsterType == MonsterType.Boss)
             {
-                int stage = GameManager.Instance.myPlayer.stageProcess / 10;
+                int stage = GameManager.I.myPlayer.stageProcess / 10;
                 float i = (10 - (float)stage) / 10;
                 duration *= i;
             }

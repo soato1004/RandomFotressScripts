@@ -1,7 +1,22 @@
 ﻿using UnityEngine;
 
-namespace RandomFortress.Data
+namespace RandomFortress
 {
+    public enum SkillType
+    {
+        Attack,
+        MultiAttack,
+        Support,
+        Opponent
+    };
+
+    public enum SkillUseType
+    {
+        Normal,
+        Choice1,
+        Choice2
+    }
+    
     [CreateAssetMenu(fileName = "SkillData", menuName = "ScriptableObjects/SkillData", order = 1)]
     public class SkillData : ScriptableObject
     {
@@ -9,8 +24,7 @@ namespace RandomFortress.Data
         public string skillName;
         public float coolTime;
         public int[] dynamicData = { 0, 0, 0 };
+        public SkillType skillType;
+        public SkillUseType skillUseType;
     }
-    
-    // main 스킬은 1000 + index
-    // sub 스킬은 2000 + index
 }

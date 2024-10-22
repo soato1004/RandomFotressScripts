@@ -1,12 +1,12 @@
 
-using RandomFortress.Data;
+
 
 
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
     public class TowerSlot : SlotBase
     {
@@ -32,7 +32,7 @@ namespace RandomFortress.Menu
 
         public void UpdateSlot(int slotIndex)
         {
-            int towerIndex = Account.Instance.TowerDeck(slotIndex);
+            int towerIndex = Account.I.TowerDeck(slotIndex);
             
             if (towerIndex == 0)
             {
@@ -42,11 +42,11 @@ namespace RandomFortress.Menu
 
             SlotTower.SetActive(true);
             
-            TowerData data = DataManager.Instance.GetTowerData(towerIndex);
+            TowerData data = DataManager.I.GetTowerData(towerIndex);
             
             TowerIndex = towerIndex;
-            Icon.sprite = ResourceManager.Instance.GetTower(data.index, 1);
-            Name.text = data.name;
+            Icon.sprite = ResourceManager.I.GetTower(data.index, 1);
+            Name.text = LocalizationManager.I.GetLocalizedString(data.index.ToString());//data.name;
             
             if (SlotRank != -1)
                 Rank.GetChild(SlotRank).gameObject.SetActive(true);

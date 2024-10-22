@@ -12,10 +12,9 @@ namespace RandomFortress
         protected override void Awake()
         {
             base.Awake();
-            hpBar = SpawnManager.Instance.GetHpBar(transform.position);
         }
         
-        public override void Init(GamePlayer targetPlayer, int index, int hp, int unitID, MonsterType type)
+        public override void Init(GamePlayer targetPlayer, int index, int hp, MonsterType type)
         {
             // Anima2d를 사용하는 몬스터는 SortingGroup을 사용
             anim = GetComponent<Animator>();
@@ -27,7 +26,10 @@ namespace RandomFortress
             if (spineBody != null) 
                 spineBody.GetComponent<MeshRenderer>().sortingOrder = (int)GameLayer.Monster;
             
-            base.Init(targetPlayer, index, hp, unitID, type);
+            base.Init(targetPlayer, index, hp, type);
+            
+            hpBar = SpawnManager.I.GetHpBar(transform.position);
+            hpBar?.Init(this); // 체력바 설정
         }
         
         public override void SetState(MonsterState state)
@@ -80,7 +82,7 @@ namespace RandomFortress
         
         protected override void SetNextWay()
         {
-            targetPos = player.GetNext(wayPoint);
+            targetPos = player.GetMonsterNextTargetPoint(wayPoint);
             dir = (targetPos - transform.position).normalized;
             totalDistance = Vector3.Distance(targetPos, transform.position);
             

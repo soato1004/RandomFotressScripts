@@ -1,9 +1,7 @@
 ﻿using System.Collections;
-
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
-
+using Photon.Pun;
 
 namespace RandomFortress
 {
@@ -14,22 +12,22 @@ namespace RandomFortress
     {
         private GameObject _prefab;
         private int _damage;
-        private int _targetCount;
+        // private int _targetCount;
         private List<ParticleSystem> particleList = new List<ParticleSystem>();
 
         public override void Init(int skillIndex, GamePlayer gPlayer, SkillButton button)
         {
-            data =  DataManager.Instance.skillDataDic[skillIndex];
+            data =  DataManager.I.skillDataDic[skillIndex];
 
             _coolTime = data.coolTime;
             _damage = data.dynamicData[0];
-            _targetCount = data.dynamicData[1];
+            // _targetCount = data.dynamicData[1];
             
             player = gPlayer;
             _skillButton = button;
             skillType = SkillType.Hero;
             useSkill = false;
-            _prefab = ResourceManager.Instance.GetPrefab("WaterSlice");
+            _prefab = ResourceManager.I.GetPrefab("WaterSlice");
         }
 
         public override void SkillStart()
@@ -45,40 +43,44 @@ namespace RandomFortress
         
         private IEnumerator UseSkillCor()
         {
+            Debug.Log("Use SKill "+data.skillName);
+            
             StartCoroutine(WaitCoolTimeCor(_coolTime));
             
             // 적 몬스터 
-            var array = player.monsterOrder.ToArray();
-            int damage = _damage * GameManager.Instance.myPlayer.stageProcess;
+            var array = player.monsterList.ToArray();
+            int damage = _damage * GameManager.I.myPlayer.stageProcess;
 
-            int count = 0;
+            // int count = 0;
             for (int i=0; i<array.Length; ++i)
             {
                 MonsterBase monster = array[i];
                 if (monster == null || monster.gameObject == null || monster.gameObject.activeSelf == false)
                     continue;
+
+                GameObject go = SpawnManager.I.GetSkillEffect(data.skillName, monster.transform.position);
+
+                // GameObject go = Instantiate(_prefab, SpawnManager.I.effectParent);
+                // go.transform.position = monster.transform.position;
                 
-                GameObject go = Instantiate(_prefab, SpawnManager.Instance.effectParent);
-                go.transform.position = monster.transform.position;
-                
-                ParticleSystem particle = go.GetComponent<ParticleSystem>();
-                particle.Play();
-                particleList.Add(particle);
+                // ParticleSystem particle = go.GetComponent<ParticleSystem>();
+                // particle.Play();
+                // particleList.Add(particle);
                 monster.Hit(damage);
-                if (++count >= _targetCount)
-                    break;
+                // if (++count >= _targetCount)
+                //      break;
                 
                 yield return Utils.WaitForSeconds(0.02f);
             }
             
             yield return Utils.WaitForSeconds(0.5f);
             
-            bool isMine = GameManager.Instance.myPlayer == player;
-            GameUIManager.Instance.HideSkillDim(isMine);
-            foreach (var particle in particleList)
-                Destroy(particle);
+            GameManager.I.SetSkillDim(false,player);
+            // foreach (var particle in particleList)
+            //     Destroy(particle);
             
-            player.SkillEnd(data.index);
+            if (player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+                player.SkillEnd(data.index);
             
         }
     }

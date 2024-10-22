@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-using RandomFortress.Data;
+
 
 using TMPro;
 using UnityEngine;
@@ -20,6 +20,7 @@ namespace RandomFortress
     public class ResultPlayer : MonoBehaviour
     {
         public Transform towerList;
+        public TextMeshProUGUI nicknameText;
         public TextMeshProUGUI gameText;
         public TextMeshProUGUI stageText;
         public Image rankIcon;
@@ -45,6 +46,8 @@ namespace RandomFortress
 
         public void ShowTowerList(SerializedDictionary<int, TowerResultData> towers)
         {
+            gameObject.SetActive(true);
+            
             // 타워 DPS
             int i = 0;
             foreach(KeyValuePair<int, TowerResultData> tower in towers)
@@ -58,7 +61,7 @@ namespace RandomFortress
                 // 타워 아이콘
                 Image icon = character.GetChild(0).GetComponent<Image>();
                 icon.gameObject.SetActive(true);
-                icon.sprite = ResourceManager.Instance.GetTower(towerIndex, towerTier);
+                icon.sprite = ResourceManager.I.GetTower(towerIndex, towerTier);
 
                 if (icon.sprite == null)
                 {
@@ -77,33 +80,31 @@ namespace RandomFortress
             }
         }
         
-        /// <summary>
         /// 게임 내에서 사용된 타워 종류별로 1개씩만 표시하고 데미지를 통합. 가장 티어가 높았던 이미지로
-        /// </summary>
-        /// <param name="towers"></param>
-        /// <param name="stage"></param>
         public void ShowResultPlayer(SerializedDictionary<int, TowerResultData> towers, GameResult result)
         {
             // 스테이지 진행상황 표시
-            stageText.text = "Stage Progress    <#FFDC30>" + result.maxClearStage + "</color>";
+            stageText.text = result.maxClearStage.ToString();
             
             // 게임 시각
-            int minute = (int)GameManager.Instance.gameTime / 60;
-            string time = minute + " : " + ((int)GameManager.Instance.gameTime % 60).ToString("D2");
-            gameText.text = "Game Time    <#FFDC30>" + time + "</color>";
+            int minute = (int)GameManager.I.gameTime / 60;
+            string time = minute + " : " + ((int)GameManager.I.gameTime % 60).ToString("D2");
+            gameText.text = time;
             
-            //TODO: 랭크티어
+            //랭크티어
             string spriteName = "Icon_GradeBadge_" + result.rank.ToString();
-            Sprite sprite = ResourceManager.Instance.GetSprite(spriteName);
+            Sprite sprite = ResourceManager.I.GetSprite(spriteName);
             if (sprite != null)
                 rankIcon.sprite = sprite;
             else 
                 Debug.Log("Not Found Sprite : "+spriteName);
 
-            rankText.text = result.rank.ToString();
+            rankText.text = LocalizationManager.I.GetLocalizedString("rank_" + result.rank.ToString().ToLower());
             
             // 타워리스트
             ShowTowerList(towers);
         }
+        
+        public void SetNickname(string nickname) => nicknameText.SetText(nickname);
     }
 }

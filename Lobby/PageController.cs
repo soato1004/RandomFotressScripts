@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RandomFortress.Menu
+namespace RandomFortress
 {
     public class PageController : MonoBehaviour
     {
@@ -22,21 +22,19 @@ namespace RandomFortress.Menu
         private PageType pageType = PageType.Battle;
         
         public BattlePage GetBattlePage => pages[(int)PageType.Battle] as BattlePage;
+        public BasePage CurrentPage => currentPage;
 
         void Start()
         {
             foreach (var page in pages)
             {
                 page.Initialize();   
-                // page.gameObject.SetActive(false);
             }
 
             // 최초 페이지
-            //pageType = PageType.Battle;
-            //currentPage = pages[(int)pageType];
-            //currentPage.gameObject.SetActive(true);
-
-            MainManager.Instance.PageController = this;
+            pageType = PageType.Battle;
+            currentPage = pages[(int)pageType];
+            currentPage.gameObject.SetActive(true);
         }
         
         public void OnPageButtonClick(int type)
@@ -54,6 +52,7 @@ namespace RandomFortress.Menu
 
             pageType = (PageType)type;
             currentPage.gameObject.SetActive(false);
+            
             currentPage = pages[(int)type];
             currentPage.UpdateUI();
             currentPage.gameObject.SetActive(true);

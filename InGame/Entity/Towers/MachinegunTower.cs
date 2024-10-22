@@ -1,11 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-
-using RandomFortress.Data;
 
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace RandomFortress
 {
@@ -13,6 +9,8 @@ namespace RandomFortress
     {
         [Header("개별")]
         [SerializeField] protected int maxAttackableEnemy; // 다중공격 최대 몇마리까지 되는지
+        
+        private const float AttackSpeedMultiplier = 100f;
         
         private MonsterBase[] _targets = null;
         
@@ -30,30 +28,18 @@ namespace RandomFortress
             _targets = new MonsterBase[maxAttackableEnemy];
         }
         
-        public override void UpgradeTower(int tier)
-        {
-            base.UpgradeTower(tier);
-            
-            // 다중공격을 위한 셋업
-            _targets = new MonsterBase[maxAttackableEnemy];
-        }
-
-        /// <summary>
-        /// 컨트롤하는 플레이어만 업데이트하고, 변동상황을 Rpc로 연동. 
-        /// </summary>
-        /// <returns></returns>
         protected override IEnumerator TowerUpdate()
         {
             while (gameObject.activeSelf)
             {
                 // 일시정지
-                if (GameManager.Instance.isPaused)
+                if (GameManager.I.isPaused)
                 {
                     yield return null;
                     continue;
                 }
                 
-                if (IsDestroyed || GameManager.Instance.isGameOver)
+                if (IsDestroyed || GameManager.I.isGameOver)
                     break;
 
                 // 1.목표타겟만큼 총알이 발사되고있지 않다면 몬스터 찾기
@@ -66,6 +52,10 @@ namespace RandomFortress
 
                 yield return null;
             }
+            
+            // 게임오버시 애니메이션 정지
+            if ( spineBody != null)
+                spineBody.AnimationState.TimeScale = 0;
         }
 
         protected override void SearchMonstersInAttackRange()
@@ -76,11 +66,10 @@ namespace RandomFortress
                 if (_targets[j] == null)
                 {
                     // 공격 대상자 찾기
-                    SerializedDictionary<int,MonsterBase> monsterList = player.monsterDic;
-                    var array = monsterList.Values.ToArray();
-                    for(int i=0; i<array.Length; ++i)
+                    List<MonsterBase> list = player.monsterList;
+                    for(int i=0; i<list.Count; ++i)
                     {
-                        MonsterBase monster = array[i];
+                        MonsterBase monster = list[i];
                         if (monster == null || monster.gameObject.activeSelf == false)
                             continue;
 
@@ -99,9 +88,7 @@ namespace RandomFortress
                 }
             }
         }
-
-        private const float AttackSpeedMultiplier = 100f;
-
+        
         protected override void UpdateAttackTargetAndShooting()
         {
             bool isShooting = false;
@@ -122,7 +109,7 @@ namespace RandomFortress
                 UpdateAttackTimer();
                 if (IsReadyToAttack())
                 {
-                    ResetAttackTimer();
+                    AttackWaitTimer = 0;
                     Shooting();
                 }
             }
@@ -130,7 +117,7 @@ namespace RandomFortress
 
         void UpdateAttackTimer()
         {
-            AttackWaitTimer += Time.deltaTime * GameManager.Instance.TimeScale;
+            AttackWaitTimer += Time.deltaTime * GameManager.I.gameSpeed;
         }
 
         bool IsReadyToAttack()
@@ -138,11 +125,6 @@ namespace RandomFortress
             float atkSpeed = Info.attackSpeed * ((AttackSpeedMultiplier + player.extraInfo.atkSpeed) / AttackSpeedMultiplier);
             float attackWaitTime = AttackSpeedMultiplier / atkSpeed;
             return AttackWaitTimer >= attackWaitTime;
-        }
-
-        void ResetAttackTimer()
-        {
-            AttackWaitTimer = 0;
         }
         
         private bool CheckOverlapWithTargets(MonsterBase monsterBase)
@@ -157,45 +139,30 @@ namespace RandomFortress
             return false;
         }
                 
-                
         protected override void Shooting()
         {
             SetState(TowerStateType.Attack);
+            DamageInfo damageInfo = GetDamage();
             
-            // 다중총알
-            DamageInfo damage = GetDamage();
             for (int j = 0; j < maxAttackableEnemy; ++j)
             {
                 if (_targets[j] == null)
                     continue;
                 
-                GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
-                ShotBullet bullet = bulletGo.GetComponent<ShotBullet>();
-                bullet.Init(player, Info.bulletIndex, _targets[j], damage);
-                
-                if (GameManager.Instance.gameType != GameType.Solo)
-                    player.Shooting(TowerPosIndex, _targets[j].unitID, damage._damage, (int)damage._type);   
+                DoShooting(_targets[j], damageInfo);
+                player.Shooting(TowerPosIndex, _targets[j]._unitID, damageInfo._damage, (int)damageInfo._type);   
             }
-
-            //
-            TotalDamege += damage._damage;
         }
         
-        public override void ReceiveShooting(int unitID, int damage, int damageType, bool isDebuff)
+        protected override void DoShooting(MonsterBase target, DamageInfo damageInfo)
         {
-            if (!player.monsterDic.ContainsKey(unitID))
-            {
-                Debug.Log("Not Found Target!!!");
-                return;
-            }
-            MonsterBase target = player.monsterDic[unitID];
+            AddDamage(damageInfo._damage);
             
             SetState(TowerStateType.Attack);
 
-            GameObject bulletGo = SpawnManager.Instance.GetBullet(GetBulletStartPos(), Info.bulletIndex);
+            GameObject bulletGo = SpawnManager.I.GetBullet(GetBulletStartPos(), Info.bulletIndex);
             ShotBullet bullet = bulletGo.GetComponent<ShotBullet>();
             
-            DamageInfo damageInfo = new DamageInfo(damage, (TextType)damageType);
             bullet.Init(player, Info.bulletIndex, target, damageInfo);
         }
     }

@@ -1,7 +1,5 @@
 ﻿using System.Collections;
 
-using RandomFortress.Data;
-
 using UnityEngine;
 
 namespace RandomFortress
@@ -14,17 +12,23 @@ namespace RandomFortress
         protected TextType textType = TextType.Damage;
         protected Vector3 TargetPos;
         
-        public virtual void Init(GamePlayer gPlayer, int index, MonsterBase monster, params object[] values) // params object[] values
+        public override void Reset()
         {
+            IsDestroyed = false;
+        }
+        
+        public virtual void Init(GamePlayer gPlayer, int index, MonsterBase monster, params object[] values)
+        {
+            Reset();
+            
             //TODO: 총알부분 제대로 구현필요
-            if (DataManager.Instance.bulletDataDic.ContainsKey(index) == false)
+            if (DataManager.I.bulletDataDic.ContainsKey(index) == false)
                 index = 0;
             
-            BulletData = DataManager.Instance.bulletDataDic[index];
+            BulletData = DataManager.I.bulletDataDic[index];
             
             gameObject.name = BulletData.bulletName;
             
-            gameObject.SetActive(true);
             player = gPlayer;
             player.AddBullet(this);
             
@@ -33,8 +37,6 @@ namespace RandomFortress
             Damage = damageInfo._damage;
             textType = damageInfo._type;
 
-            
-            IsDestroyed = false;
 
             // 몬스터가 제거될경우 총알의 타겟을 없앤다
             Target.OnUnitDestroy += () => { Target = null; };
@@ -49,12 +51,10 @@ namespace RandomFortress
         protected virtual IEnumerator UpdateCor()
         {
             // 조정된 게임크기에 맞게 이동속도도 보간해야한다
-            float mainScale = GameManager.Instance.mainScale;
-            
-            while (!GameManager.Instance.isGameOver)
+            while (!GameManager.I.isGameOver)
             {
                 // 일시정지
-                if (GameManager.Instance.isPaused)
+                if (GameManager.I.isPaused)
                 {
                     yield return null;
                     continue;
@@ -66,7 +66,7 @@ namespace RandomFortress
                 
                 // 타겟 최종위치로 이동
                 Vector3 disVec = (TargetPos - transform.position).normalized; // 방향
-                float moveFactor = GameConstants.BulletMoveSpeed * Time.deltaTime * GameManager.Instance.TimeScale * mainScale;
+                float moveFactor = GameConstants.BulletMoveSpeed * Time.deltaTime * GameManager.I.gameSpeed;
                 transform.position += moveFactor * disVec;
         
                 float distance = Vector3.Distance(TargetPos, transform.position);
@@ -93,8 +93,8 @@ namespace RandomFortress
         {
             if (Target == null) return;
             
-            SoundManager.Instance.PlayOneShot("bullet_hit_base");
-            SpawnManager.Instance.GetEffect(BulletData.hitEffName, TargetPos);
+            SoundManager.I.PlayOneShot(SoundKey.bullet_hit_base);
+            SpawnManager.I.GetBulletEffect(BulletData.hitEffName, TargetPos);
             Target.Hit(Damage, textType);
         }
         
